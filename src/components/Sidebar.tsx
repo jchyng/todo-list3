@@ -3,6 +3,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { SidebarFilter, SidebarGroup } from "@/types/sidebar";
 import {
@@ -188,155 +194,166 @@ export function Sidebar({
   };
 
   return (
-    <div
-      className={cn(
-        "w-64 h-full bg-gray-50 border-r border-gray-200 flex flex-col",
-        className
-      )}
-    >
-      <div className="space-y-1">
-        {/* System Items */}
-        <div className="pt-4" />
-        {systemItems.map((item) => (
-          <SidebarItem
-            key={item.id}
-            id={item.id}
-            name={item.name}
-            count={item.count}
-            icon={item.icon}
-            isSelected={isSelected(item.id)}
-            onClick={() => onFilterChange(item.id as SidebarFilter)}
-          />
-        ))}
-        <div className="h-4" /> {/* Spacing */}
-        {/* User Lists and Groups */}
+    <TooltipProvider>
+      <div
+        className={cn(
+          "w-64 h-full bg-gray-50 border-r border-gray-200 flex flex-col",
+          className
+        )}
+      >
         <div className="space-y-1">
-          {/* Individual Lists */}
-          <SidebarItem
-            id="ideas"
-            name="아이디어"
-            count={5}
-            colorDot="bg-blue-400"
-            isSelected={isSelected("ideas")}
-            onClick={() => onFilterChange("ideas")}
-          />
-
-          <SidebarItem
-            id="shopping"
-            name="시가시 청자와할 물건"
-            count={3}
-            colorDot="bg-gray-400"
-            isSelected={isSelected("shopping")}
-            onClick={() => onFilterChange("shopping")}
-          />
-
-          <SidebarItem
-            id="daily"
-            name="나중에 할 일"
-            count={1}
-            colorDot="bg-red-400"
-            isSelected={isSelected("daily")}
-            onClick={() => onFilterChange("daily")}
-          />
-
-          {/* Groups */}
-          {groups.map((group) => (
-            <Collapsible
-              key={group.id}
-              open={expandedGroups.has(group.id)}
-              onOpenChange={() => toggleGroup(group.id)}
-            >
-              <CollapsibleTrigger asChild>
-                <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center justify-between px-4 py-2">
-                    <div className="flex items-center gap-2 flex-1">
-                      {expandedGroups.has(group.id) ? (
-                        <FolderOpen className="h-4 w-4 text-blue-500" />
-                      ) : (
-                        <Folder className="h-4 w-4 text-gray-500" />
-                      )}
-                      <span className="text-sm font-medium">{group.name}</span>
-                    </div>
-                    {expandedGroups.has(group.id) ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </div>
-                </div>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent className="space-y-1">
-                {group.lists.map((list) => (
-                  <SidebarItem
-                    key={list.id}
-                    id={list.id}
-                    name={list.name}
-                    count={list.count}
-                    colorDot="bg-orange-400"
-                    isSelected={isSelected(list.id)}
-                    onClick={() => onFilterChange(list.id)}
-                    isNested={true}
-                  />
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
+          {/* System Items */}
+          <div className="pt-4" />
+          {systemItems.map((item) => (
+            <SidebarItem
+              key={item.id}
+              id={item.id}
+              name={item.name}
+              count={item.count}
+              icon={item.icon}
+              isSelected={isSelected(item.id)}
+              onClick={() => onFilterChange(item.id as SidebarFilter)}
+            />
           ))}
+          <div className="h-4" /> {/* Spacing */}
+          {/* User Lists and Groups */}
+          <div className="space-y-1">
+            {/* Individual Lists */}
+            <SidebarItem
+              id="ideas"
+              name="아이디어"
+              count={5}
+              colorDot="bg-blue-400"
+              isSelected={isSelected("ideas")}
+              onClick={() => onFilterChange("ideas")}
+            />
 
-          {/* Add Actions */}
-          <div className="space-y-2 pt-2 pb-4">
-            {/* Group Add Input - appears above buttons */}
-            <div
-              className={cn(
-                "px-4 transition-all duration-200",
-                isAddingGroup
-                  ? "opacity-100 max-h-10"
-                  : "opacity-0 max-h-0 overflow-hidden"
-              )}
-            >
-              <div className="flex items-center gap-2 py-1.5">
-                <Folder className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                <input
-                  type="text"
-                  value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  onBlur={handleInputBlur}
-                  placeholder="새 그룹 이름"
-                  className="flex-1 h-auto p-0 text-sm bg-transparent border-none outline-none placeholder:text-gray-400"
-                  autoFocus={isAddingGroup}
-                />
-              </div>
-            </div>
+            <SidebarItem
+              id="shopping"
+              name="시가시 청자와할 물건"
+              count={3}
+              colorDot="bg-gray-400"
+              isSelected={isSelected("shopping")}
+              onClick={() => onFilterChange("shopping")}
+            />
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1 rounded hover:bg-blue-50 transition-colors overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-2 min-w-0">
-                  <Plus className="h-4 w-4 text-blue-600 flex-shrink-0" />
+            <SidebarItem
+              id="daily"
+              name="나중에 할 일"
+              count={1}
+              colorDot="bg-red-400"
+              isSelected={isSelected("daily")}
+              onClick={() => onFilterChange("daily")}
+            />
+
+            {/* Groups */}
+            {groups.map((group) => (
+              <Collapsible
+                key={group.id}
+                open={expandedGroups.has(group.id)}
+                onOpenChange={() => toggleGroup(group.id)}
+              >
+                <CollapsibleTrigger asChild>
+                  <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center justify-between px-4 py-2">
+                      <div className="flex items-center gap-2 flex-1">
+                        {expandedGroups.has(group.id) ? (
+                          <FolderOpen className="h-4 w-4 text-blue-500" />
+                        ) : (
+                          <Folder className="h-4 w-4 text-gray-500" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {group.name}
+                        </span>
+                      </div>
+                      {expandedGroups.has(group.id) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="space-y-1">
+                  {group.lists.map((list) => (
+                    <SidebarItem
+                      key={list.id}
+                      id={list.id}
+                      name={list.name}
+                      count={list.count}
+                      colorDot="bg-orange-400"
+                      isSelected={isSelected(list.id)}
+                      onClick={() => onFilterChange(list.id)}
+                      isNested={true}
+                    />
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+
+            {/* Add Actions */}
+            <div className="space-y-2 pt-2 pb-4">
+              {/* Group Add Input - appears above buttons */}
+              <div
+                className={cn(
+                  "px-4 transition-all duration-200",
+                  isAddingGroup
+                    ? "opacity-100 max-h-10"
+                    : "opacity-0 max-h-0 overflow-hidden"
+                )}
+              >
+                <div className="flex items-center gap-2 py-1.5">
+                  <Folder className="h-4 w-4 text-gray-500 flex-shrink-0" />
                   <input
                     type="text"
-                    value={newListName}
-                    onChange={(e) => setNewListName(e.target.value)}
-                    onBlur={handleListBlur}
-                    placeholder="새 목록"
-                    className="flex-1 min-w-0 text-sm text-gray-900 bg-transparent border-none outline-none placeholder:text-blue-600 cursor-text"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    onBlur={handleInputBlur}
+                    placeholder="새 그룹 이름"
+                    className="flex-1 h-auto p-0 text-sm bg-transparent border-none outline-none placeholder:text-gray-400"
+                    autoFocus={isAddingGroup}
                   />
                 </div>
               </div>
 
-              <div
-                className="rounded cursor-pointer hover:bg-blue-50 transition-colors"
-                onClick={handleAddGroup}
-              >
-                <div className="px-4 py-2">
-                  <FolderPlus className="h-4 w-4 text-blue-600" />
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 rounded hover:bg-blue-50 transition-colors overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2 min-w-0">
+                    <Plus className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                    <input
+                      type="text"
+                      value={newListName}
+                      onChange={(e) => setNewListName(e.target.value)}
+                      onBlur={handleListBlur}
+                      placeholder="새 목록"
+                      className="flex-1 min-w-0 text-sm text-gray-900 bg-transparent border-none outline-none placeholder:text-blue-600 cursor-text"
+                    />
+                  </div>
                 </div>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="rounded cursor-pointer hover:bg-blue-50 transition-colors"
+                      onClick={handleAddGroup}
+                    >
+                      <div className="px-4 py-2">
+                        <FolderPlus className="h-4 w-4 text-blue-600" />
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>그룹 만들기</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
