@@ -16,13 +16,21 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
+  FolderMinus,
   FolderOpen,
   FolderPlus,
   Plus,
   Star,
   Sun,
+  Trash2Icon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "./ui/context-menu";
 
 interface SidebarProps {
   selectedFilter: SidebarFilter;
@@ -41,6 +49,15 @@ interface SidebarItemProps {
   isNested?: boolean;
 }
 
+interface SidebarGroupProps {
+  group: SidebarGroup;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onFilterChange: (filter: SidebarFilter) => void;
+  isSelected: (filterId: string) => boolean;
+  onDelete: () => void;
+}
+
 function SidebarItem({
   id,
   name,
@@ -52,36 +69,110 @@ function SidebarItem({
   isNested = false,
 }: SidebarItemProps) {
   return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative",
-        isSelected && "bg-blue-100 text-blue-700"
-      )}
-    >
-      {isSelected && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-blue-600" />
-      )}
-      <div
-        className={cn(
-          "flex items-center justify-between py-2",
-          isNested ? "pl-10 pr-4" : "px-4"
-        )}
-      >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
-          {colorDot && (
-            <div
-              className={cn("w-3 h-3 rounded-full flex-shrink-0", colorDot)}
-            />
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <div
+          onClick={onClick}
+          className={cn(
+            "w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative",
+            isSelected && "bg-blue-100 text-blue-700"
           )}
-          <span className="text-sm truncate">{name}</span>
+        >
+          {isSelected && (
+            <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-blue-600" />
+          )}
+          <div
+            className={cn(
+              "flex items-center justify-between py-2",
+              isNested ? "pl-10 pr-4" : "px-4"
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+              {colorDot && (
+                <div
+                  className={cn("w-3 h-3 rounded-full flex-shrink-0", colorDot)}
+                />
+              )}
+              <span className="text-sm truncate">{name}</span>
+            </div>
+            {count !== undefined && (
+              <span className="text-xs text-gray-500 flex-shrink-0">
+                {count}
+              </span>
+            )}
+          </div>
         </div>
-        {count !== undefined && (
-          <span className="text-xs text-gray-500 flex-shrink-0">{count}</span>
-        )}
-      </div>
-    </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50">
+          <div className="flex gap-3 items-center">
+            <Trash2Icon className="text-red-700" />
+            목록 삭제
+          </div>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
+function SidebarGroup({
+  group,
+  isExpanded,
+  onToggle,
+  onFilterChange,
+  isSelected,
+  onDelete,
+}: SidebarGroupProps) {
+  return (
+    <Collapsible open={isExpanded} onOpenChange={onToggle}>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <CollapsibleTrigger asChild>
+            <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors">
+              <div className="flex items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2 flex-1">
+                  {isExpanded ? (
+                    <FolderOpen className="h-4 w-4 text-blue-500" />
+                  ) : (
+                    <Folder className="h-4 w-4 text-gray-500" />
+                  )}
+                  <span className="text-sm font-medium">{group.name}</span>
+                </div>
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </div>
+            </div>
+          </CollapsibleTrigger>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={onDelete} className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50">
+            <div className="flex gap-3 items-center">
+              <FolderMinus className="text-red-700" />
+              그룹 해제
+            </div>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      <CollapsibleContent className="space-y-1">
+        {group.lists.map((list) => (
+          <SidebarItem
+            key={list.id}
+            id={list.id}
+            name={list.name}
+            count={list.count}
+            colorDot="bg-orange-400"
+            isSelected={isSelected(list.id)}
+            onClick={() => onFilterChange(list.id)}
+            isNested={true}
+          />
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -193,6 +284,11 @@ export function Sidebar({
     setNewListName("");
   };
 
+  const handleDeleteGroup = (groupId: string) => {
+    console.log("그룹 해제:", groupId);
+    // 실제 그룹 해제 로직은 나중에 구현
+  };
+
   return (
     <TooltipProvider>
       <div
@@ -253,48 +349,15 @@ export function Sidebar({
 
             {/* Groups */}
             {groups.map((group) => (
-              <Collapsible
+              <SidebarGroup
                 key={group.id}
-                open={expandedGroups.has(group.id)}
-                onOpenChange={() => toggleGroup(group.id)}
-              >
-                <CollapsibleTrigger asChild>
-                  <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center justify-between px-4 py-2">
-                      <div className="flex items-center gap-2 flex-1">
-                        {expandedGroups.has(group.id) ? (
-                          <FolderOpen className="h-4 w-4 text-blue-500" />
-                        ) : (
-                          <Folder className="h-4 w-4 text-gray-500" />
-                        )}
-                        <span className="text-sm font-medium">
-                          {group.name}
-                        </span>
-                      </div>
-                      {expandedGroups.has(group.id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  </div>
-                </CollapsibleTrigger>
-
-                <CollapsibleContent className="space-y-1">
-                  {group.lists.map((list) => (
-                    <SidebarItem
-                      key={list.id}
-                      id={list.id}
-                      name={list.name}
-                      count={list.count}
-                      colorDot="bg-orange-400"
-                      isSelected={isSelected(list.id)}
-                      onClick={() => onFilterChange(list.id)}
-                      isNested={true}
-                    />
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
+                group={group}
+                isExpanded={expandedGroups.has(group.id)}
+                onToggle={() => toggleGroup(group.id)}
+                onFilterChange={onFilterChange}
+                isSelected={isSelected}
+                onDelete={() => handleDeleteGroup(group.id)}
+              />
             ))}
 
             {/* Add Actions */}
