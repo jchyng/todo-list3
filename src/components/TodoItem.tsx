@@ -7,6 +7,7 @@ interface TodoItemProps {
   todo: TodoItemType
   onToggleComplete?: (id: string) => void
   onTogglePriority?: (id: string) => void
+  onClick?: (todo: TodoItemType) => void
   className?: string
 }
 
@@ -14,6 +15,7 @@ export function TodoItem({
   todo, 
   onToggleComplete, 
   onTogglePriority,
+  onClick,
   className 
 }: TodoItemProps) {
   const handleToggleComplete = () => {
@@ -27,16 +29,20 @@ export function TodoItem({
   const isPriorityHigh = todo.priority === 'high'
 
   return (
-    <div className={cn(
-      "flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors",
-      todo.completed && "bg-gray-50",
-      className
-    )}>
+    <div 
+      className={cn(
+        "flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer",
+        todo.completed && "bg-gray-50",
+        className
+      )}
+      onClick={() => onClick?.(todo)}
+    >
       {/* Checkbox */}
       <div className="flex-shrink-0 mt-1">
         <Checkbox
           checked={todo.completed}
           onCheckedChange={handleToggleComplete}
+          onClick={(e) => e.stopPropagation()}
           className="h-5 w-5 rounded-full"
         />
       </div>
@@ -63,7 +69,10 @@ export function TodoItem({
       {/* Priority Star */}
       <div className="flex-shrink-0">
         <button
-          onClick={handleTogglePriority}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleTogglePriority()
+          }}
           className="p-1 hover:bg-gray-100 rounded transition-colors"
           aria-label={isPriorityHigh ? "우선순위 해제" : "우선순위 설정"}
         >

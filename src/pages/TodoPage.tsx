@@ -1,10 +1,12 @@
 import { useState } from "react"
 import { Header } from "@/components/Header"
 import { TodoItem } from "@/components/TodoItem"
+import { TodoDetailPanel } from "@/components/TodoDetailPanel"
 import type { TodoItem as TodoItemType } from "@/types/todo"
 
 export function TodoPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTodo, setSelectedTodo] = useState<TodoItemType | null>(null)
   
   // 샘플 데이터
   const [todos, setTodos] = useState<TodoItemType[]>([
@@ -52,6 +54,29 @@ export function TodoPage() {
     ))
   }
 
+  const handleSelectTodo = (todo: TodoItemType) => {
+    setSelectedTodo(todo)
+  }
+
+  const handleUpdateTodo = (id: string, updates: Partial<TodoItemType>) => {
+    setTodos(prev => prev.map(todo => 
+      todo.id === id ? { ...todo, ...updates } : todo
+    ))
+    
+    // Update selected todo if it's the one being updated
+    if (selectedTodo?.id === id) {
+      setSelectedTodo(prev => prev ? { ...prev, ...updates } : null)
+    }
+  }
+
+  const handleDeleteTodo = (id: string) => {
+    setTodos(prev => prev.filter(todo => todo.id !== id))
+  }
+
+  const handleCloseDetailPanel = () => {
+    setSelectedTodo(null)
+  }
+
   const filteredTodos = todos.filter(todo =>
     searchQuery === '' || todo.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -63,34 +88,50 @@ export function TodoPage() {
         onPageChange={() => {}}
         onSearch={handleSearch}
       />
-      <main className="p-4">
-        <div className="flex flex-col space-y-4">
-          <h2 className="text-2xl font-bold">Todo List</h2>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground">
-              검색: "{searchQuery}"
-            </p>
-          )}
-          
-          {/* Todo List */}
-          <div className="space-y-2">
-            {filteredTodos.length > 0 ? (
-              filteredTodos.map(todo => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  onToggleComplete={handleToggleComplete}
-                  onTogglePriority={handleTogglePriority}
-                />
-              ))
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                {searchQuery ? '검색 결과가 없습니다.' : '할 일이 없습니다.'}
-              </div>
+      <div className="flex h-[calc(100vh-64px)]">
+        {/* Main Content */}
+        <main className={`flex-1 p-4 transition-all duration-300 ${selectedTodo ? 'mr-96' : ''}`}>
+          <div className="flex flex-col space-y-4">
+            <h2 className="text-2xl font-bold">Todo List</h2>
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground">
+                검색: "{searchQuery}"
+              </p>
             )}
+            
+            {/* Todo List */}
+            <div className="space-y-2">
+              {filteredTodos.length > 0 ? (
+                filteredTodos.map(todo => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    onToggleComplete={handleToggleComplete}
+                    onTogglePriority={handleTogglePriority}
+                    onClick={handleSelectTodo}
+                  />
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  {searchQuery ? '검색 결과가 없습니다.' : '할 일이 없습니다.'}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+
+        {/* Detail Panel */}
+        {selectedTodo && (
+          <div className="fixed right-0 top-16 h-[calc(100vh-64px)] z-10">
+            <TodoDetailPanel
+              todo={selectedTodo}
+              onClose={handleCloseDetailPanel}
+              onUpdate={(updates) => handleUpdateTodo(selectedTodo.id, updates)}
+              onDelete={handleDeleteTodo}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
