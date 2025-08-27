@@ -31,6 +31,17 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./ui/context-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SidebarProps {
   selectedFilter: SidebarFilter;
@@ -68,6 +79,11 @@ function SidebarItem({
   onClick,
   isNested = false,
 }: SidebarItemProps) {
+  const handleDeleteList = () => {
+    console.log("목록 삭제:", id, name);
+    // 실제 삭제 로직은 나중에 구현
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -105,12 +121,40 @@ function SidebarItem({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50">
-          <div className="flex gap-3 items-center">
-            <Trash2Icon className="text-red-700" />
-            목록 삭제
-          </div>
-        </ContextMenuItem>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <ContextMenuItem
+              className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <div className="flex gap-3 items-center">
+                <Trash2Icon className="text-red-700" />
+                목록 삭제
+              </div>
+            </ContextMenuItem>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                "{name}"이(가) 영구적으로 삭제됩니다.
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                이 작업은 취소할 수 없습니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-3 sm:gap-3">
+              <AlertDialogCancel className="px-6 py-2 font-extrabold">
+                취소
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteList}
+                className="px-6 py-2 bg-red-700 hover:bg-red-800 font-extrabold"
+              >
+                목록 삭제
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -149,7 +193,10 @@ function SidebarGroup({
           </CollapsibleTrigger>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={onDelete} className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50">
+          <ContextMenuItem
+            onClick={onDelete}
+            className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50"
+          >
             <div className="flex gap-3 items-center">
               <FolderMinus className="text-red-700" />
               그룹 해제
