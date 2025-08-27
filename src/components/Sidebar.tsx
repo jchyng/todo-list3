@@ -10,7 +10,6 @@ import {
   FolderOpen,
   FolderPlus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Collapsible,
@@ -24,6 +23,61 @@ interface SidebarProps {
   selectedFilter: SidebarFilter;
   onFilterChange: (filter: SidebarFilter) => void;
   className?: string;
+}
+
+interface SidebarItemProps {
+  id: string;
+  name: string;
+  count?: number;
+  icon?: React.ElementType;
+  colorDot?: string;
+  isSelected: boolean;
+  onClick: () => void;
+  isNested?: boolean;
+}
+
+function SidebarItem({
+  id,
+  name,
+  count,
+  icon: Icon,
+  colorDot,
+  isSelected,
+  onClick,
+  isNested = false,
+}: SidebarItemProps) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative",
+        isSelected && "bg-blue-100 text-blue-700"
+      )}
+    >
+      {isSelected && (
+        <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-blue-600" />
+      )}
+      <div
+        className={cn(
+          "flex items-center justify-between py-2",
+          isNested ? "pl-10 pr-4" : "px-4"
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+          {colorDot && (
+            <div
+              className={cn("w-3 h-3 rounded-full flex-shrink-0", colorDot)}
+            />
+          )}
+          <span className="text-sm truncate">{name}</span>
+        </div>
+        {count !== undefined && (
+          <span className="text-xs text-gray-500 flex-shrink-0">{count}</span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function Sidebar({
@@ -126,74 +180,50 @@ export function Sidebar({
         className
       )}
     >
-      <div className="p-4 space-y-1">
+      <div className="space-y-1">
         {/* System Items */}
-        {systemItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.id}
-              onClick={() => onFilterChange(item.id as SidebarFilter)}
-              className={cn(
-                "flex items-center justify-between px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors",
-                isSelected(item.id) && "bg-blue-100 text-blue-700"
-              )}
-            >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm truncate">{item.name}</span>
-              </div>
-              <span className="text-xs text-gray-500 flex-shrink-0">
-                {item.count}
-              </span>
-            </div>
-          );
-        })}
+        <div className="pt-4" />
+        {systemItems.map((item) => (
+          <SidebarItem
+            key={item.id}
+            id={item.id}
+            name={item.name}
+            count={item.count}
+            icon={item.icon}
+            isSelected={isSelected(item.id)}
+            onClick={() => onFilterChange(item.id as SidebarFilter)}
+          />
+        ))}
         <div className="h-4" /> {/* Spacing */}
         {/* User Lists and Groups */}
         <div className="space-y-1">
           {/* Individual Lists */}
-          <div
+          <SidebarItem
+            id="ideas"
+            name="아이디어"
+            count={5}
+            colorDot="bg-blue-400"
+            isSelected={isSelected("ideas")}
             onClick={() => onFilterChange("ideas")}
-            className={cn(
-              "flex items-center justify-between px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors",
-              isSelected("ideas") && "bg-blue-100 text-blue-700"
-            )}
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="w-3 h-3 bg-blue-400 rounded-full flex-shrink-0" />
-              <span className="text-sm truncate">아이디어</span>
-            </div>
-            <span className="text-xs text-gray-500 flex-shrink-0">5</span>
-          </div>
+          />
 
-          <div
+          <SidebarItem
+            id="shopping"
+            name="시가시 청자와할 물건"
+            count={3}
+            colorDot="bg-gray-400"
+            isSelected={isSelected("shopping")}
             onClick={() => onFilterChange("shopping")}
-            className={cn(
-              "flex items-center justify-between px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors",
-              isSelected("shopping") && "bg-blue-100 text-blue-700"
-            )}
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="w-3 h-3 bg-gray-400 rounded-full flex-shrink-0" />
-              <span className="text-sm truncate">시가시 청자와할 물건</span>
-            </div>
-            <span className="text-xs text-gray-500 flex-shrink-0">3</span>
-          </div>
+          />
 
-          <div
+          <SidebarItem
+            id="daily"
+            name="나중에 할 일"
+            count={1}
+            colorDot="bg-red-400"
+            isSelected={isSelected("daily")}
             onClick={() => onFilterChange("daily")}
-            className={cn(
-              "flex items-center justify-between px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors",
-              isSelected("daily") && "bg-blue-100 text-blue-700"
-            )}
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="w-3 h-3 bg-red-400 rounded-full flex-shrink-0" />
-              <span className="text-sm truncate">나중에 할 일</span>
-            </div>
-            <span className="text-xs text-gray-500 flex-shrink-0">1</span>
-          </div>
+          />
 
           {/* Groups */}
           {groups.map((group) => (
@@ -203,52 +233,48 @@ export function Sidebar({
               onOpenChange={() => toggleGroup(group.id)}
             >
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between w-full px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-2 flex-1">
+                <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center justify-between px-4 py-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      {expandedGroups.has(group.id) ? (
+                        <FolderOpen className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <Folder className="h-4 w-4 text-gray-500" />
+                      )}
+                      <span className="text-sm font-medium">{group.name}</span>
+                    </div>
                     {expandedGroups.has(group.id) ? (
-                      <FolderOpen className="h-4 w-4 text-blue-500" />
+                      <ChevronDown className="h-4 w-4" />
                     ) : (
-                      <Folder className="h-4 w-4 text-gray-500" />
+                      <ChevronRight className="h-4 w-4" />
                     )}
-                    <span className="text-sm font-medium">{group.name}</span>
                   </div>
-                  {expandedGroups.has(group.id) ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
                 </div>
               </CollapsibleTrigger>
 
               <CollapsibleContent className="space-y-1">
                 {group.lists.map((list) => (
-                  <div
+                  <SidebarItem
                     key={list.id}
+                    id={list.id}
+                    name={list.name}
+                    count={list.count}
+                    colorDot="bg-orange-400"
+                    isSelected={isSelected(list.id)}
                     onClick={() => onFilterChange(list.id)}
-                    className={cn(
-                      "flex items-center justify-between px-2 py-2 ml-6 rounded cursor-pointer hover:bg-gray-100 transition-colors",
-                      isSelected(list.id) && "bg-blue-100 text-blue-700"
-                    )}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-3 h-3 bg-orange-400 rounded-full flex-shrink-0" />
-                      <span className="text-sm truncate">{list.name}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 flex-shrink-0">
-                      {list.count}
-                    </span>
-                  </div>
+                    isNested={true}
+                  />
                 ))}
               </CollapsibleContent>
             </Collapsible>
           ))}
 
           {/* Add Actions */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-2 pb-4">
             {/* Group Add Input - appears above buttons */}
             <div
               className={cn(
-                "flex items-center gap-2 px-2 transition-all duration-200",
+                "flex items-center gap-2 px-4 transition-all duration-200",
                 isAddingGroup
                   ? "opacity-100 max-h-10"
                   : "opacity-0 max-h-0 overflow-hidden"
@@ -268,21 +294,21 @@ export function Sidebar({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                className="flex-1 justify-start gap-2 p-2 h-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="text-sm">새 목록</span>
-              </Button>
+              <div className="flex-1 rounded cursor-pointer hover:bg-blue-50 transition-colors">
+                <div className="flex items-center gap-2 px-4 py-2">
+                  <Plus className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm text-blue-600">새 목록</span>
+                </div>
+              </div>
 
-              <Button
-                variant="ghost"
-                className="p-2 h-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              <div
+                className="rounded cursor-pointer hover:bg-blue-50 transition-colors"
                 onClick={handleAddGroup}
               >
-                <FolderPlus className="h-4 w-4" />
-              </Button>
+                <div className="px-4 py-2">
+                  <FolderPlus className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
