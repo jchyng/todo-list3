@@ -215,7 +215,12 @@ export function Sidebar({
               onClick={() => onFilterChange(item.id as SidebarFilter)}
             />
           ))}
-          <div className="h-4" /> {/* Spacing */}
+
+          {/* Separator */}
+          <div className="px-4 my-4">
+            <div className="border-t border-gray-300"></div>
+          </div>
+
           {/* User Lists and Groups */}
           <div className="space-y-1">
             {/* Individual Lists */}
