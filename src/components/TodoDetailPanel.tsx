@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -12,7 +16,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { TodoItem } from "@/types/todo";
-import { Calendar, PanelRightClose, Repeat, Star, Trash2 } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronDownIcon,
+  PanelRightClose,
+  RotateCcwIcon,
+  Star,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 
 interface TodoDetailPanelProps {
@@ -32,16 +44,18 @@ export function TodoDetailPanel({
 }: TodoDetailPanelProps) {
   const [title, setTitle] = useState(todo.title);
   const [description, setDescription] = useState(todo.description || "");
-  const [dueDate, setDueDate] = useState(
-    todo.dueDate ? todo.dueDate.toISOString().split("T")[0] : ""
-  );
+  const [startDate, setStartDate] = useState<Date | undefined>(todo.dueDate);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [openFrom, setOpenFrom] = useState(false);
+  const [openTo, setOpenTo] = useState(false);
   const [repeatOption, setRepeatOption] = useState<string>("none");
 
   const handleSave = () => {
     onUpdate({
       title: title.trim() || todo.title,
       description: description.trim() || undefined,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
+      dueDate: startDate,
+      endDate: endDate,
       updatedAt: new Date(),
     });
   };
@@ -89,18 +103,20 @@ export function TodoDetailPanel({
         <Checkbox
           checked={todo.completed}
           onCheckedChange={handleToggleComplete}
-          className="h-5 w-5 rounded-full"
+          className="h-5 w-5 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
         />
-        <Input
+        <input
+          type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleSave}
-          className="border-0 p-0 text-sm font-medium bg-transparent focus:ring-0 focus:border-0 flex-1"
+          className="border-0 outline-0 p-0 text-sm font-medium bg-transparent focus:ring-0 focus:border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 w-full"
           placeholder="작업 제목"
+          style={{ border: "none", outline: "none", boxShadow: "none" }}
         />
         <button
           onClick={handleTogglePriority}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          className="p-1 hover:bg-gray-100 rounded transition-colors focus:outline-none focus-visible:ring-0"
           aria-label={
             todo.priority === "high" ? "우선순위 해제" : "우선순위 설정"
           }
@@ -119,56 +135,148 @@ export function TodoDetailPanel({
       {/* Content */}
       <div className="flex-1 p-4 space-y-6 overflow-y-auto">
         {/* Description */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="description"
-            className="text-sm font-medium text-gray-700"
-          >
-            메모 추가
-          </Label>
+        <div>
           <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             onBlur={handleSave}
-            placeholder="작업에 대한 세부 정보를 추가하세요..."
-            className="min-h-[100px] text-sm"
+            placeholder="메모 추가"
+            className="min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200 resize-none"
           />
         </div>
 
-        {/* Due Date */}
+        {/* Date Selection */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <Label
-              htmlFor="dueDate"
-              className="text-sm font-medium text-gray-700"
-            >
-              기한 설정
-            </Label>
+          {/* Start Date */}
+          <div>
+            <Popover open={openFrom} onOpenChange={setOpenFrom}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-between font-normal focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-gray-400" />
+                    <span>
+                      {startDate
+                        ? startDate.toLocaleDateString("ko-KR", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "시작 날짜"}
+                    </span>
+                  </div>
+                  <ChevronDownIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto overflow-hidden p-0"
+                align="start"
+              >
+                <CalendarComponent
+                  mode="single"
+                  selected={startDate}
+                  captionLayout="dropdown"
+                  onSelect={(date) => {
+                    setStartDate(date);
+                    setOpenFrom(false);
+                    handleSave();
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+            {startDate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setStartDate(undefined);
+                  handleSave();
+                }}
+                className="h-auto p-1 text-xs text-gray-500 hover:text-red-600 mt-1"
+              >
+                <X className="h-3 w-3 mr-1" />
+                제거
+              </Button>
+            )}
           </div>
-          <Input
-            id="dueDate"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            onBlur={handleSave}
-            className="text-sm"
-          />
+
+          {/* End Date */}
+          <div>
+            <Popover open={openTo} onOpenChange={setOpenTo}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-between font-normal focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-gray-400" />
+                    <span>
+                      {endDate
+                        ? endDate.toLocaleDateString("ko-KR", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "종료 날짜"}
+                    </span>
+                  </div>
+                  <ChevronDownIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto overflow-hidden p-0"
+                align="start"
+              >
+                <CalendarComponent
+                  mode="single"
+                  selected={endDate}
+                  captionLayout="dropdown"
+                  onSelect={(date) => {
+                    setEndDate(date);
+                    setOpenTo(false);
+                    handleSave();
+                  }}
+                  disabled={startDate && { before: startDate }}
+                />
+              </PopoverContent>
+            </Popover>
+            {endDate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEndDate(undefined);
+                  handleSave();
+                }}
+                className="h-auto p-1 text-xs text-gray-500 hover:text-red-600 mt-1"
+              >
+                <X className="h-3 w-3 mr-1" />
+                제거
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Repeat */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Repeat className="h-4 w-4 text-gray-500" />
-            <Label className="text-sm font-medium text-gray-700">반복</Label>
-          </div>
+        <div>
           <Select value={repeatOption} onValueChange={setRepeatOption}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="반복 안함" />
+            <SelectTrigger className="w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200">
+              <div className="flex items-center gap-2">
+                <RotateCcwIcon className="h-4 w-4 text-gray-400" />
+                <SelectValue placeholder="반복" />
+              </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">반복 안함</SelectItem>
+              <SelectItem value="none">반복</SelectItem>
               <SelectItem value="daily">매일</SelectItem>
               <SelectItem value="weekdays">평일</SelectItem>
               <SelectItem value="weekly">매주</SelectItem>
