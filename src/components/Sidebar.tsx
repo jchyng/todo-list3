@@ -1,22 +1,22 @@
-import { useState, useRef, useEffect } from "react";
-import {
-  Sun,
-  Star,
-  CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  Folder,
-  FolderOpen,
-  FolderPlus,
-} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import type { SidebarGroup, SidebarFilter } from "@/types/sidebar";
+import type { SidebarFilter, SidebarGroup } from "@/types/sidebar";
+import {
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  Plus,
+  Star,
+  Sun,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface SidebarProps {
   selectedFilter: SidebarFilter;
@@ -89,6 +89,7 @@ export function Sidebar({
   );
   const [isAddingGroup, setIsAddingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [newListName, setNewListName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 샘플 데이터
@@ -180,6 +181,10 @@ export function Sidebar({
     } else if (e.key === "Escape") {
       handleCancelAddGroup();
     }
+  };
+
+  const handleListBlur = () => {
+    setNewListName("");
   };
 
   return (
@@ -292,7 +297,6 @@ export function Sidebar({
               <div className="flex items-center gap-2 py-1.5">
                 <Folder className="h-4 w-4 text-gray-500 flex-shrink-0" />
                 <input
-                  ref={inputRef}
                   type="text"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
@@ -300,16 +304,24 @@ export function Sidebar({
                   onBlur={handleInputBlur}
                   placeholder="새 그룹 이름"
                   className="flex-1 h-auto p-0 text-sm bg-transparent border-none outline-none placeholder:text-gray-400"
+                  autoFocus={isAddingGroup}
                 />
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              <div className="flex-1 rounded cursor-pointer hover:bg-blue-50 transition-colors">
-                <div className="flex items-center gap-2 px-4 py-2">
-                  <Plus className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm text-blue-600">새 목록</span>
+              <div className="flex-1 rounded hover:bg-blue-50 transition-colors overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2 min-w-0">
+                  <Plus className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={newListName}
+                    onChange={(e) => setNewListName(e.target.value)}
+                    onBlur={handleListBlur}
+                    placeholder="새 목록"
+                    className="flex-1 min-w-0 text-sm text-gray-900 bg-transparent border-none outline-none placeholder:text-blue-600 cursor-text"
+                  />
                 </div>
               </div>
 
