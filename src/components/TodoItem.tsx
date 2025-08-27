@@ -1,0 +1,82 @@
+import { Star, FileText } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
+import type { TodoItem as TodoItemType } from "@/types/todo"
+
+interface TodoItemProps {
+  todo: TodoItemType
+  onToggleComplete?: (id: string) => void
+  onTogglePriority?: (id: string) => void
+  className?: string
+}
+
+export function TodoItem({ 
+  todo, 
+  onToggleComplete, 
+  onTogglePriority,
+  className 
+}: TodoItemProps) {
+  const handleToggleComplete = () => {
+    onToggleComplete?.(todo.id)
+  }
+
+  const handleTogglePriority = () => {
+    onTogglePriority?.(todo.id)
+  }
+
+  const isPriorityHigh = todo.priority === 'high'
+
+  return (
+    <div className={cn(
+      "flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors",
+      todo.completed && "bg-gray-50",
+      className
+    )}>
+      {/* Checkbox */}
+      <div className="flex-shrink-0 mt-1">
+        <Checkbox
+          checked={todo.completed}
+          onCheckedChange={handleToggleComplete}
+          className="h-5 w-5 rounded-full"
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Title */}
+        <div className={cn(
+          "text-sm font-medium text-gray-900 mb-1",
+          todo.completed && "line-through text-gray-500"
+        )}>
+          {todo.title}
+        </div>
+
+        {/* Note indicator */}
+        {todo.description && (
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <FileText className="h-3 w-3" />
+            <span>노트</span>
+          </div>
+        )}
+      </div>
+
+      {/* Priority Star */}
+      <div className="flex-shrink-0">
+        <button
+          onClick={handleTogglePriority}
+          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          aria-label={isPriorityHigh ? "우선순위 해제" : "우선순위 설정"}
+        >
+          <Star 
+            className={cn(
+              "h-5 w-5 transition-colors",
+              isPriorityHigh 
+                ? "fill-blue-500 text-blue-500" 
+                : "text-gray-300 hover:text-gray-400"
+            )}
+          />
+        </button>
+      </div>
+    </div>
+  )
+}
