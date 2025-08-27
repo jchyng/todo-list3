@@ -80,7 +80,7 @@ export function TodoDetailPanel({
   return (
     <div
       className={cn(
-        "w-96 h-full bg-white border-l border-t border-gray-200 flex flex-col",
+        "w-80 h-full bg-white border-l border-gray-200 flex flex-col",
         className
       )}
     >

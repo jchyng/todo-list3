@@ -127,64 +127,69 @@ export function TodoPage() {
   })
 
   return (
-    <div className="min-h-screen bg-background mx-auto max-w-7xl">
+    <div className="h-screen bg-background flex flex-col">
       <Header
         currentPage="todo"
         onPageChange={() => {}}
         onSearch={handleSearch}
       />
-      <div className="flex h-[calc(100vh-64px)]">
+      
+      {/* Main Layout - Outlook style 3-panel */}
+      <div className="flex-1 flex h-[calc(100vh-64px)]">
         {/* Sidebar */}
         <Sidebar
           selectedFilter={selectedFilter}
           onFilterChange={setSelectedFilter}
         />
 
-        {/* Main Content */}
-        <main className={`flex-1 p-4 transition-all duration-300 ${selectedTodo ? 'mr-96' : ''}`}>
-          <div className="flex flex-col space-y-4">
-            <h2 className="text-2xl font-bold">{getFilterTitle(selectedFilter)}</h2>
-            {searchQuery && (
-              <p className="text-sm text-muted-foreground">
-                검색: "{searchQuery}"
-              </p>
-            )}
-            
-            {/* Add Todo Input */}
-            <AddTodoInput onAddTodo={handleAddTodo} />
-            
-            {/* Todo List */}
-            <div className="space-y-2">
-              {filteredTodos.length > 0 ? (
-                filteredTodos.map(todo => (
-                  <TodoItem
-                    key={todo.id}
-                    todo={todo}
-                    onToggleComplete={handleToggleComplete}
-                    onTogglePriority={handleTogglePriority}
-                    onClick={handleSelectTodo}
-                  />
-                ))
-              ) : (
-                <div className="text-center text-muted-foreground py-8">
-                  {searchQuery ? '검색 결과가 없습니다.' : `${getFilterTitle(selectedFilter)}에 할 일이 없습니다.`}
-                </div>
+        {/* Main Content Area - Contains both List and Detail Panel */}
+        <main className="flex-1 flex">
+          {/* Todo List Panel */}
+          <div className={`${selectedTodo ? 'flex-1' : 'flex-1'} p-4 transition-all duration-300 ${selectedTodo ? 'border-r border-gray-200' : ''}`}>
+            <div className="flex flex-col space-y-4 h-full">
+              <h2 className="text-2xl font-bold">{getFilterTitle(selectedFilter)}</h2>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground">
+                  검색: "{searchQuery}"
+                </p>
               )}
+              
+              {/* Add Todo Input */}
+              <AddTodoInput onAddTodo={handleAddTodo} />
+              
+              {/* Todo List */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-2">
+                  {filteredTodos.length > 0 ? (
+                    filteredTodos.map(todo => (
+                      <TodoItem
+                        key={todo.id}
+                        todo={todo}
+                        onToggleComplete={handleToggleComplete}
+                        onTogglePriority={handleTogglePriority}
+                        onClick={handleSelectTodo}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8">
+                      {searchQuery ? '검색 결과가 없습니다.' : `${getFilterTitle(selectedFilter)}에 할 일이 없습니다.`}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </main>
 
-        {/* Detail Panel */}
-        {selectedTodo && (
-          <div className="fixed right-0 top-16 h-[calc(100vh-64px)] z-10">
+          {/* Detail Panel - Inside Main Area */}
+          {selectedTodo && (
             <TodoDetailPanel
               todo={selectedTodo}
               onClose={handleCloseDetailPanel}
               onUpdate={(updates) => handleUpdateTodo(selectedTodo.id, updates)}
               onDelete={handleDeleteTodo}
             />
-          </div>
-        )}
+          )}
+        </main>
       </div>
     </div>
   )
