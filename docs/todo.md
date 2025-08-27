@@ -20,3 +20,5 @@
 
 - calendar
   https://calendar.jeraidi.tech/calendar
+
+그룹 펼치기 버튼은 우측에 위치 시킬 것 폴더 아이콘이 색상 동그라미와 같은 열에 위치할 수 있게

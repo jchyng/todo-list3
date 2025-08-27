@@ -1,13 +1,16 @@
 import { useState } from "react"
 import { Header } from "@/components/Header"
+import { Sidebar } from "@/components/Sidebar"
 import { TodoItem } from "@/components/TodoItem"
 import { TodoDetailPanel } from "@/components/TodoDetailPanel"
 import { AddTodoInput } from "@/components/AddTodoInput"
 import type { TodoItem as TodoItemType } from "@/types/todo"
+import type { SidebarFilter } from "@/types/sidebar"
 
 export function TodoPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTodo, setSelectedTodo] = useState<TodoItemType | null>(null)
+  const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>('tasks')
   
   // 샘플 데이터
   const [todos, setTodos] = useState<TodoItemType[]>([
@@ -91,9 +94,37 @@ export function TodoPage() {
     setTodos(prev => [newTodo, ...prev])
   }
 
-  const filteredTodos = todos.filter(todo =>
-    searchQuery === '' || todo.title.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const getFilterTitle = (filter: SidebarFilter) => {
+    switch (filter) {
+      case 'today': return '오늘 할 일'
+      case 'important': return '중요'
+      case 'tasks': return '작업'
+      default: return '목록'
+    }
+  }
+
+  const filteredTodos = todos.filter(todo => {
+    // 검색 필터
+    const matchesSearch = searchQuery === '' || todo.title.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    // 사이드바 필터
+    let matchesFilter = true
+    switch (selectedFilter) {
+      case 'today':
+        // 오늘 날짜에 해당하는 할 일들
+        matchesFilter = todo.dueDate && new Date(todo.dueDate).toDateString() === new Date().toDateString()
+        break
+      case 'important':
+        matchesFilter = todo.priority === 'high'
+        break
+      case 'tasks':
+      default:
+        matchesFilter = true // 모든 작업 표시
+        break
+    }
+    
+    return matchesSearch && matchesFilter
+  })
 
   return (
     <div className="min-h-screen bg-background mx-auto max-w-7xl">
@@ -103,10 +134,16 @@ export function TodoPage() {
         onSearch={handleSearch}
       />
       <div className="flex h-[calc(100vh-64px)]">
+        {/* Sidebar */}
+        <Sidebar
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+        />
+
         {/* Main Content */}
         <main className={`flex-1 p-4 transition-all duration-300 ${selectedTodo ? 'mr-96' : ''}`}>
           <div className="flex flex-col space-y-4">
-            <h2 className="text-2xl font-bold">Todo List</h2>
+            <h2 className="text-2xl font-bold">{getFilterTitle(selectedFilter)}</h2>
             {searchQuery && (
               <p className="text-sm text-muted-foreground">
                 검색: "{searchQuery}"
@@ -130,7 +167,7 @@ export function TodoPage() {
                 ))
               ) : (
                 <div className="text-center text-muted-foreground py-8">
-                  {searchQuery ? '검색 결과가 없습니다.' : '할 일이 없습니다.'}
+                  {searchQuery ? '검색 결과가 없습니다.' : `${getFilterTitle(selectedFilter)}에 할 일이 없습니다.`}
                 </div>
               )}
             </div>
