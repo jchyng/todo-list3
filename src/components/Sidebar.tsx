@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Sun,
   Star,
@@ -10,7 +10,6 @@ import {
   FolderOpen,
   FolderPlus,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   Collapsible,
   CollapsibleContent,
@@ -90,6 +89,7 @@ export function Sidebar({
   );
   const [isAddingGroup, setIsAddingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 샘플 데이터
   const groups: SidebarGroup[] = [
@@ -141,6 +141,15 @@ export function Sidebar({
   const handleAddGroup = () => {
     setIsAddingGroup(true);
   };
+
+  useEffect(() => {
+    if (isAddingGroup && inputRef.current) {
+      // 애니메이션이 완료된 후 포커스
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isAddingGroup]);
 
   const handleSaveGroup = () => {
     if (newGroupName.trim()) {
@@ -274,22 +283,25 @@ export function Sidebar({
             {/* Group Add Input - appears above buttons */}
             <div
               className={cn(
-                "flex items-center gap-2 px-4 transition-all duration-200",
+                "px-4 transition-all duration-200",
                 isAddingGroup
                   ? "opacity-100 max-h-10"
                   : "opacity-0 max-h-0 overflow-hidden"
               )}
             >
-              <FolderOpen className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <Input
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                onKeyDown={handleKeyPress}
-                onBlur={handleInputBlur}
-                placeholder="새 그룹 이름"
-                className="flex-1 h-8 text-sm"
-                autoFocus={isAddingGroup}
-              />
+              <div className="flex items-center gap-2 py-1.5">
+                <Folder className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  onBlur={handleInputBlur}
+                  placeholder="새 그룹 이름"
+                  className="flex-1 h-auto p-0 text-sm bg-transparent border-none outline-none placeholder:text-gray-400"
+                />
+              </div>
             </div>
 
             {/* Action Buttons */}
