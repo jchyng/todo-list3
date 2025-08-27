@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Header } from "@/components/Header"
 import { TodoItem } from "@/components/TodoItem"
 import { TodoDetailPanel } from "@/components/TodoDetailPanel"
+import { AddTodoInput } from "@/components/AddTodoInput"
 import type { TodoItem as TodoItemType } from "@/types/todo"
 
 export function TodoPage() {
@@ -77,6 +78,19 @@ export function TodoPage() {
     setSelectedTodo(null)
   }
 
+  const handleAddTodo = (title: string) => {
+    const newTodo: TodoItemType = {
+      id: Date.now().toString(),
+      title,
+      description: undefined,
+      completed: false,
+      priority: 'low',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setTodos(prev => [newTodo, ...prev])
+  }
+
   const filteredTodos = todos.filter(todo =>
     searchQuery === '' || todo.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -98,6 +112,9 @@ export function TodoPage() {
                 검색: "{searchQuery}"
               </p>
             )}
+            
+            {/* Add Todo Input */}
+            <AddTodoInput onAddTodo={handleAddTodo} />
             
             {/* Todo List */}
             <div className="space-y-2">

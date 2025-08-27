@@ -85,37 +85,35 @@ export function TodoDetailPanel({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100">
-        <div className="flex items-center gap-3 flex-1">
-          <Checkbox
-            checked={todo.completed}
-            onCheckedChange={handleToggleComplete}
-            className="h-5 w-5 rounded-full"
+      <div className="flex items-center gap-3 p-4 border-b border-gray-100">
+        <Checkbox
+          checked={todo.completed}
+          onCheckedChange={handleToggleComplete}
+          className="h-5 w-5 rounded-full"
+        />
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={handleSave}
+          className="border-0 p-0 text-sm font-medium bg-transparent focus:ring-0 focus:border-0 flex-1"
+          placeholder="작업 제목"
+        />
+        <button
+          onClick={handleTogglePriority}
+          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          aria-label={
+            todo.priority === "high" ? "우선순위 해제" : "우선순위 설정"
+          }
+        >
+          <Star
+            className={cn(
+              "h-5 w-5 transition-colors",
+              todo.priority === "high"
+                ? "fill-blue-500 text-blue-500"
+                : "text-gray-300 hover:text-gray-400"
+            )}
           />
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleSave}
-            className="border-0 p-0 text-sm font-medium bg-transparent focus:ring-0 focus:border-0"
-            placeholder="작업 제목"
-          />
-          <button
-            onClick={handleTogglePriority}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            aria-label={
-              todo.priority === "high" ? "우선순위 해제" : "우선순위 설정"
-            }
-          >
-            <Star
-              className={cn(
-                "h-5 w-5 transition-colors",
-                todo.priority === "high"
-                  ? "fill-blue-500 text-blue-500"
-                  : "text-gray-300 hover:text-gray-400"
-              )}
-            />
-          </button>
-        </div>
+        </button>
       </div>
 
       {/* Content */}
