@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 
@@ -49,13 +48,15 @@ export function AddTodoInput({ onAddTodo, className }: AddTodoInputProps) {
           disabled 
         />
         <form onSubmit={handleSubmit} className="flex-1">
-          <Input
+          <input
+            type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             placeholder="작업 제목을 입력하세요..."
-            className="border-0 p-0 text-sm bg-transparent focus:ring-0 focus:border-0 w-full"
+            className="border-0 outline-0 p-0 text-sm bg-transparent focus:ring-0 focus:border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 w-full"
+            style={{ border: "none", outline: "none", boxShadow: "none" }}
             autoFocus
           />
         </form>
