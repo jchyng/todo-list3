@@ -232,8 +232,7 @@ export function TodoPage() {
                     onChange={(e) => setEditingTitle(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={handleTitleBlur}
-                    className="border-0 outline-0 p-0 text-2xl font-bold text-gray-900 bg-transparent focus:ring-0 focus:border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                    style={{ border: "none", outline: "none", boxShadow: "none" }}
+                    className="border-0 p-0 text-2xl font-bold text-gray-900 bg-transparent"
                     autoFocus
                   />
                 ) : (
