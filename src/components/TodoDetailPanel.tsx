@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -18,7 +19,6 @@ import { cn } from "@/lib/utils";
 import type { TodoItem } from "@/types/todo";
 import {
   CalendarIcon,
-  ChevronDownIcon,
   PanelRightClose,
   RotateCcwIcon,
   Star,
@@ -48,7 +48,11 @@ export function TodoDetailPanel({
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [openFrom, setOpenFrom] = useState(false);
   const [openTo, setOpenTo] = useState(false);
-  const [repeatOption, setRepeatOption] = useState<string>("none");
+  const [repeatOption, setRepeatOption] = useState<string>("");
+  const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
+  const [customRepeatUnit, setCustomRepeatUnit] = useState("주");
+  const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>([]);
+  const [openRepeat, setOpenRepeat] = useState(false);
 
   const handleSave = () => {
     onUpdate({
@@ -89,6 +93,16 @@ export function TodoDetailPanel({
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);
+  };
+
+  const handleRepeatOptionChange = (value: string) => {
+    setRepeatOption(value);
+  };
+
+  const toggleWeekday = (day: string) => {
+    setSelectedWeekdays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
   };
 
   return (
@@ -171,7 +185,21 @@ export function TodoDetailPanel({
                         : "시작 날짜"}
                     </span>
                   </div>
-                  <ChevronDownIcon className="h-4 w-4" />
+                  <div className="flex items-center gap-1">
+                    {startDate && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStartDate(undefined);
+                          handleSave();
+                        }}
+                        className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <X className="h-3 w-3 text-gray-400 hover:text-gray-600" />
+                      </button>
+                    )}
+                  </div>
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -190,20 +218,6 @@ export function TodoDetailPanel({
                 />
               </PopoverContent>
             </Popover>
-            {startDate && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setStartDate(undefined);
-                  handleSave();
-                }}
-                className="h-auto p-1 text-xs text-gray-500 hover:text-red-600 mt-1"
-              >
-                <X className="h-3 w-3 mr-1" />
-                제거
-              </Button>
-            )}
           </div>
 
           {/* End Date */}
@@ -229,7 +243,21 @@ export function TodoDetailPanel({
                         : "종료 날짜"}
                     </span>
                   </div>
-                  <ChevronDownIcon className="h-4 w-4" />
+                  <div className="flex items-center gap-1">
+                    {endDate && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEndDate(undefined);
+                          handleSave();
+                        }}
+                        className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <X className="h-3 w-3 text-gray-400 hover:text-gray-600" />
+                      </button>
+                    )}
+                  </div>
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -249,42 +277,139 @@ export function TodoDetailPanel({
                 />
               </PopoverContent>
             </Popover>
-            {endDate && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setEndDate(undefined);
-                  handleSave();
-                }}
-                className="h-auto p-1 text-xs text-gray-500 hover:text-red-600 mt-1"
-              >
-                <X className="h-3 w-3 mr-1" />
-                제거
-              </Button>
-            )}
           </div>
         </div>
 
         {/* Repeat */}
-        <div>
-          <Select value={repeatOption} onValueChange={setRepeatOption}>
-            <SelectTrigger className="w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200">
+        <div className="space-y-3">
+          {/* Custom Repeat Configuration - shown when custom is selected */}
+          {repeatOption === "custom" && (
+            <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-white">
+              {/* Interval and Unit */}
               <div className="flex items-center gap-2">
-                <RotateCcwIcon className="h-4 w-4 text-gray-400" />
-                <SelectValue placeholder="반복" />
+                <div className="relative flex-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    value={customRepeatInterval}
+                    onChange={(e) =>
+                      setCustomRepeatInterval(parseInt(e.target.value) || 1)
+                    }
+                    className="w-full text-center border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none pr-6"
+                  />
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
+                    <button
+                      type="button"
+                      className="h-3 w-3 flex items-center justify-center text-xs text-gray-400 hover:text-gray-600"
+                      onClick={() =>
+                        setCustomRepeatInterval((prev) => prev + 1)
+                      }
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className="h-3 w-3 flex items-center justify-center text-xs text-gray-400 hover:text-gray-600"
+                      onClick={() =>
+                        setCustomRepeatInterval((prev) => Math.max(1, prev - 1))
+                      }
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
+                <Select
+                  value={customRepeatUnit}
+                  onValueChange={setCustomRepeatUnit}
+                >
+                  <SelectTrigger className="w-24 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="일">일</SelectItem>
+                    <SelectItem value="주">주</SelectItem>
+                    <SelectItem value="월">월</SelectItem>
+                    <SelectItem value="년">년</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">반복</SelectItem>
-              <SelectItem value="daily">매일</SelectItem>
-              <SelectItem value="weekdays">평일</SelectItem>
-              <SelectItem value="weekly">매주</SelectItem>
-              <SelectItem value="monthly">매월</SelectItem>
-              <SelectItem value="yearly">매년</SelectItem>
-              <SelectItem value="custom">사용자 지정</SelectItem>
-            </SelectContent>
-          </Select>
+
+              {/* Weekday Selection */}
+              {customRepeatUnit === "주" && (
+                <div className="flex gap-0">
+                  {["일", "월", "화", "수", "목", "금", "토"].map(
+                    (day, index) => (
+                      <Button
+                        key={day}
+                        variant={
+                          selectedWeekdays.includes(day) ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => toggleWeekday(day)}
+                        className={`h-8 flex-1 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-xs ${
+                          index === 0
+                            ? "rounded-r-none"
+                            : index === 6
+                            ? "rounded-l-none"
+                            : "rounded-none"
+                        } ${index > 0 ? "border-l-0" : ""}`}
+                      >
+                        {day}
+                      </Button>
+                    )
+                  )}
+                </div>
+              )}
+
+              {/* Save Button */}
+              <div className="flex justify-center pt-1">
+                <Button
+                  onClick={() => handleSave()}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-1 h-8 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
+                >
+                  저장
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="relative">
+            <Select
+              value={repeatOption}
+              onValueChange={handleRepeatOptionChange}
+              open={openRepeat}
+              onOpenChange={setOpenRepeat}
+            >
+              <SelectTrigger className="w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200 [&>svg]:hidden">
+                <div className="flex items-center gap-2">
+                  <RotateCcwIcon className="h-4 w-4 text-gray-400" />
+                  <SelectValue placeholder="반복" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekdays">평일</SelectItem>
+                <SelectItem value="weekends">주말</SelectItem>
+                <SelectItem value="daily">매일</SelectItem>
+                <div className="px-2 py-1">
+                  <div className="border-t border-gray-200"></div>
+                </div>
+                <SelectItem value="custom">사용자 지정</SelectItem>
+              </SelectContent>
+            </Select>
+            {repeatOption && repeatOption !== "" && (
+              <div className="flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRepeatOption("");
+                  }}
+                  className="p-0.5 rounded transition-colors"
+                >
+                  <X className="h-4 w-4 text-gray-400" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
