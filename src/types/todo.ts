@@ -4,6 +4,8 @@ export interface TodoItem {
   description?: string
   completed: boolean
   priority: 'low' | 'medium' | 'high'
+  status?: 'pending' | 'in_progress' | 'completed'
+  startedAt?: Date
   dueDate?: Date
   endDate?: Date
   createdAt: Date

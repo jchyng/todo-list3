@@ -32,6 +32,7 @@ export function TodoPage() {
       description: "강의 내용을 정리하고 슬라이드를 준비해야 합니다.",
       completed: false,
       priority: "high",
+      status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -41,6 +42,7 @@ export function TodoPage() {
       description: undefined,
       completed: false,
       priority: "low",
+      status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -104,6 +106,7 @@ export function TodoPage() {
       description: undefined,
       completed: false,
       priority: "low",
+      status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
     };

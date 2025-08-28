@@ -210,7 +210,6 @@ export function Sidebar({
   const [newGroupName, setNewGroupName] = useState("");
   const newGroupInputRef = useRef<HTMLInputElement>(null);
   const [newListName, setNewListName] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // 샘플 데이터
   const groups: SidebarGroup[] = [

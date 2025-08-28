@@ -10,7 +10,6 @@ interface AddTodoInputProps {
 
 export function AddTodoInput({ onAddTodo, className }: AddTodoInputProps) {
   const [title, setTitle] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +27,6 @@ export function AddTodoInput({ onAddTodo, className }: AddTodoInputProps) {
     }
   };
 
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
-
-  const handleBlur = () => {
-    setIsFocused(false);
-  };
 
   const handleClick = () => {
     // Input에 focus를 주기 위해 다음 tick에서 실행
@@ -65,8 +57,6 @@ export function AddTodoInput({ onAddTodo, className }: AddTodoInputProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={handleKeyDown}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
             placeholder="작업 추가"
           />
         </form>

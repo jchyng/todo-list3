@@ -13,8 +13,10 @@ import { cn } from "@/lib/utils";
 import type { TodoItem } from "@/types/todo";
 import {
   PanelRightClose,
+  Play,
   RotateCcwIcon,
   Trash2,
+  X,
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import {
@@ -23,6 +25,17 @@ import {
   SelectFieldWithClear,
   DeleteConfirmDialog,
 } from "./common";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Constants
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const;
@@ -53,8 +66,11 @@ export function TodoDetailPanel({
   const [description, setDescription] = useState(todo.description || "");
   
   // Date state
-  const [startDate, setStartDate] = useState<Date | undefined>(todo.dueDate);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(todo.endDate);
+  
+  // Status state
+  const [status, setStatus] = useState<'pending' | 'in_progress' | 'completed'>(todo.status || 'pending');
+  const [startedAt, setStartedAt] = useState<Date | undefined>(todo.startedAt);
   
   // Repeat state
   const [repeatOption, setRepeatOption] = useState<RepeatOptionType>("");
@@ -66,11 +82,12 @@ export function TodoDetailPanel({
     onUpdate({
       title: title.trim() || todo.title,
       description: description.trim() || undefined,
-      dueDate: startDate,
+      status,
+      startedAt,
       endDate: endDate,
       updatedAt: new Date(),
     });
-  }, [title, description, startDate, endDate, onUpdate, todo.title]);
+  }, [title, description, status, startedAt, endDate, onUpdate, todo.title]);
 
   const handleToggleComplete = useCallback(() => {
     onUpdate({
@@ -85,6 +102,27 @@ export function TodoDetailPanel({
       updatedAt: new Date(),
     });
   }, [todo.priority, onUpdate]);
+
+  const handleStartTask = useCallback(() => {
+    const now = new Date();
+    setStatus('in_progress');
+    setStartedAt(now);
+    onUpdate({
+      status: 'in_progress',
+      startedAt: now,
+      updatedAt: new Date(),
+    });
+  }, [onUpdate]);
+
+  const handleStopTask = useCallback(() => {
+    setStatus('pending');
+    setStartedAt(undefined);
+    onUpdate({
+      status: 'pending',
+      startedAt: undefined,
+      updatedAt: new Date(),
+    });
+  }, [onUpdate]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("ko-KR", {
@@ -139,30 +177,55 @@ export function TodoDetailPanel({
 
       {/* Content */}
       <div className="flex-1 p-4 space-y-6 overflow-y-auto">
-        {/* Description */}
-        <div>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={handleSave}
-            placeholder="메모 추가"
-            className="min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200 resize-none"
-          />
+        {/* Start Button / Status Display */}
+        <div className="space-y-3">
+          {status === 'pending' ? (
+            <Button
+              onClick={handleStartTask}
+              className="w-full flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg"
+            >
+              <Play className="h-4 w-4" />
+              시작하기
+            </Button>
+          ) : status === 'in_progress' ? (
+            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-blue-900">진행 중</span>
+                <span className="text-xs text-blue-700">
+                  {startedAt && formatDate(startedAt)}
+                </span>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>진행 상태를 초기화하시겠습니까?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      작업의 시작 시간이 초기화되고 진행 전 상태로 돌아갑니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleStopTask}>
+                      초기화
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ) : null}
         </div>
 
         {/* Date Selection */}
         <div className="space-y-3">
-          {/* Start Date */}
-          <DatePickerField
-            date={startDate}
-            onDateChange={(date) => {
-              setStartDate(date);
-              handleSave();
-            }}
-            placeholder="시작 날짜"
-          />
-
           {/* End Date */}
           <DatePickerField
             date={endDate}
@@ -170,13 +233,27 @@ export function TodoDetailPanel({
               setEndDate(date);
               handleSave();
             }}
-            placeholder="종료 날짜"
-            disabled={startDate ? (date) => date < startDate : undefined}
+            placeholder="마감 날짜"
           />
         </div>
 
         {/* Repeat */}
         <div className="space-y-3">
+          <SelectFieldWithClear
+            value={repeatOption}
+            onValueChange={handleRepeatOptionChange}
+            placeholder="반복"
+            options={[
+              { value: "weekdays", label: "평일" },
+              { value: "weekends", label: "주말" },
+              { value: "daily", label: "매일" },
+              { value: "custom", label: "사용자 지정" },
+            ]}
+            icon={<RotateCcwIcon className="h-4 w-4 text-gray-400" />}
+            clearButtonPosition="outside"
+            onClear={() => setRepeatOption("" as RepeatOptionType)}
+          />
+
           {/* Custom Repeat Configuration - shown when custom is selected */}
           {repeatOption === "custom" && (
             <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-white">
@@ -266,20 +343,17 @@ export function TodoDetailPanel({
               </div>
             </div>
           )}
+        </div>
 
-          <SelectFieldWithClear
-            value={repeatOption}
-            onValueChange={handleRepeatOptionChange}
-            placeholder="반복"
-            options={[
-              { value: "weekdays", label: "평일" },
-              { value: "weekends", label: "주말" },
-              { value: "daily", label: "매일" },
-              { value: "custom", label: "사용자 지정" },
-            ]}
-            icon={<RotateCcwIcon className="h-4 w-4 text-gray-400" />}
-            clearButtonPosition="outside"
-            onClear={() => setRepeatOption("" as RepeatOptionType)}
+        {/* Description - Moved to bottom */}
+        <div>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={handleSave}
+            placeholder="메모 추가"
+            className="min-h-[100px] text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none border-gray-200 resize-none"
           />
         </div>
       </div>
