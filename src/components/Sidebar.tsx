@@ -208,6 +208,7 @@ export function Sidebar({
   );
   const [isAddingGroup, setIsAddingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const newGroupInputRef = useRef<HTMLInputElement>(null);
   const [newListName, setNewListName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -263,10 +264,10 @@ export function Sidebar({
   };
 
   useEffect(() => {
-    if (isAddingGroup && inputRef.current) {
+    if (isAddingGroup && newGroupInputRef.current) {
       // 애니메이션이 완료된 후 포커스
       setTimeout(() => {
-        inputRef.current?.focus();
+        newGroupInputRef.current?.focus();
       }, 100);
     }
   }, [isAddingGroup]);
@@ -404,6 +405,7 @@ export function Sidebar({
                 <div className="flex items-center gap-2 py-1.5">
                   <Folder className="h-4 w-4 text-gray-500 flex-shrink-0" />
                   <input
+                    ref={newGroupInputRef}
                     type="text"
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}

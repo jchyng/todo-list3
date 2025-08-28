@@ -219,7 +219,7 @@ export function TodoPage() {
             }`}
           >
             <div className="flex flex-col space-y-4 h-full">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {!isSidebarVisible && (
                   <button onClick={toggleSidebar} className="p-2">
                     <Menu className="h-4 w-4" />

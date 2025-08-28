@@ -15,9 +15,11 @@ export const COLORS = [
   { name: "파랑", value: "bg-blue-500", class: "bg-blue-500" },
   { name: "보라", value: "bg-purple-500", class: "bg-purple-500" },
   { name: "핑크", value: "bg-pink-500", class: "bg-pink-500" },
+  { name: "청록", value: "bg-teal-500", class: "bg-teal-500" },
+  { name: "인디고", value: "bg-indigo-500", class: "bg-indigo-500" },
 ] as const;
 
-export type ColorValue = typeof COLORS[number]["value"];
+export type ColorValue = (typeof COLORS)[number]["value"];
 
 interface ColorPaletteProps {
   currentColor?: ColorValue;
@@ -45,19 +47,18 @@ export function ColorPalette({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        {children}
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-auto p-3" align="start">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {COLORS.map((color) => (
             <button
               key={color.value}
               onClick={() => handleColorSelect(color.value)}
               className={cn(
-                "w-8 h-8 rounded-full transition-all hover:scale-110",
+                "w-5 h-5 rounded-full transition-all hover:scale-110",
                 color.class,
-                currentColor === color.value && "ring-2 ring-blue-500 ring-offset-2"
+                currentColor === color.value &&
+                  "ring-2 ring-blue-500 ring-offset-2"
               )}
               title={color.name}
             />
