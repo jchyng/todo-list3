@@ -12,6 +12,8 @@ export function TodoPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTodo, setSelectedTodo] = useState<TodoItemType | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>("tasks");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
 
   // 목록별 색상 관리
   const [listColors, setListColors] = useState<Record<string, ColorValue>>({
@@ -85,6 +87,7 @@ export function TodoPage() {
     }
   };
 
+
   const handleDeleteTodo = (id: string) => {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
@@ -128,6 +131,29 @@ export function TodoPage() {
       ...prev,
       [selectedFilter]: color,
     }));
+  };
+
+  const handleTitleClick = () => {
+    setEditingTitle(getFilterTitle(selectedFilter));
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSubmit = () => {
+    // 실제로는 사용자 정의 목록에만 적용되어야 하지만, 
+    // 현재는 기본 필터의 제목은 변경하지 않습니다
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleBlur = () => {
+    handleTitleSubmit();
   };
 
   const filteredTodos = todos.filter((todo) => {
@@ -199,9 +225,22 @@ export function TodoPage() {
                     />
                   </button>
                 </ColorPalette>
-                <h2 className="text-2xl font-bold">
-                  {getFilterTitle(selectedFilter)}
-                </h2>
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={handleTitleKeyDown}
+                    onBlur={handleTitleBlur}
+                    className="border-0 outline-0 p-0 text-2xl font-bold text-gray-900 bg-transparent focus:ring-0 focus:border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    style={{ border: "none", outline: "none", boxShadow: "none" }}
+                    autoFocus
+                  />
+                ) : (
+                  <h2 className="text-2xl font-bold cursor-text" onClick={handleTitleClick}>
+                    {getFilterTitle(selectedFilter)}
+                  </h2>
+                )}
               </div>
               {searchQuery && (
                 <p className="text-sm text-muted-foreground">
