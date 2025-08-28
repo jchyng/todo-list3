@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Menu } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { TodoItem } from "@/components/TodoItem";
@@ -14,6 +15,7 @@ export function TodoPage() {
   const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>("tasks");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   // 목록별 색상 관리
   const [listColors, setListColors] = useState<Record<string, ColorValue>>({
@@ -87,7 +89,6 @@ export function TodoPage() {
     }
   };
 
-
   const handleDeleteTodo = (id: string) => {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
@@ -139,21 +140,25 @@ export function TodoPage() {
   };
 
   const handleTitleSubmit = () => {
-    // 실제로는 사용자 정의 목록에만 적용되어야 하지만, 
+    // 실제로는 사용자 정의 목록에만 적용되어야 하지만,
     // 현재는 기본 필터의 제목은 변경하지 않습니다
     setIsEditingTitle(false);
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleTitleSubmit();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setIsEditingTitle(false);
     }
   };
 
   const handleTitleBlur = () => {
     handleTitleSubmit();
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarVisible(!isSidebarVisible);
   };
 
   const filteredTodos = todos.filter((todo) => {
@@ -195,10 +200,13 @@ export function TodoPage() {
       {/* Main Layout - Outlook style 3-panel */}
       <div className="flex-1 flex h-[calc(100vh-64px)]">
         {/* Sidebar */}
-        <Sidebar
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-        />
+        {isSidebarVisible && (
+          <Sidebar
+            selectedFilter={selectedFilter}
+            onFilterChange={setSelectedFilter}
+            onToggleSidebar={toggleSidebar}
+          />
+        )}
 
         {/* Main Content Area - Contains both List and Detail Panel */}
         <main className="flex-1 flex">
@@ -211,14 +219,19 @@ export function TodoPage() {
             }`}
           >
             <div className="flex flex-col space-y-4 h-full">
-              <div className="flex items-center gap-3 ml-2">
+              <div className="flex items-center gap-3">
+                {!isSidebarVisible && (
+                  <button onClick={toggleSidebar} className="p-2">
+                    <Menu className="h-4 w-4" />
+                  </button>
+                )}
                 <ColorPalette
                   currentColor={getCurrentListColor(selectedFilter)}
                   onColorChange={handleColorChange}
                 >
                   <button className="flex-shrink-0">
                     <div
-                      className={`w-6 h-6 rounded-full transition-all hover:scale-110 ${getCurrentListColor(
+                      className={`w-5 h-5 rounded-full transition-all hover:scale-110 ${getCurrentListColor(
                         selectedFilter
                       )}`}
                       title="목록 색상 변경"
@@ -232,11 +245,14 @@ export function TodoPage() {
                     onChange={(e) => setEditingTitle(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={handleTitleBlur}
-                    className="border-0 p-0 text-2xl font-bold text-gray-900 bg-transparent"
+                    className="border-0 outline-0 text-xl font-bold text-gray-900 bg-transparent focus:outline-none focus:ring-0 focus:border-0"
                     autoFocus
                   />
                 ) : (
-                  <h2 className="text-2xl font-bold cursor-text" onClick={handleTitleClick}>
+                  <h2
+                    className="text-xl font-bold cursor-text"
+                    onClick={handleTitleClick}
+                  >
                     {getFilterTitle(selectedFilter)}
                   </h2>
                 )}

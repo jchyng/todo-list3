@@ -19,6 +19,7 @@ import {
   FolderMinus,
   FolderOpen,
   FolderPlus,
+  Menu,
   Plus,
   Star,
   Sun,
@@ -36,6 +37,7 @@ import { DeleteConfirmDialog } from "./common";
 interface SidebarProps {
   selectedFilter: SidebarFilter;
   onFilterChange: (filter: SidebarFilter) => void;
+  onToggleSidebar?: () => void;
   className?: string;
 }
 
@@ -198,6 +200,7 @@ function SidebarGroup({
 export function Sidebar({
   selectedFilter,
   onFilterChange,
+  onToggleSidebar,
   className,
 }: SidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
@@ -315,9 +318,18 @@ export function Sidebar({
           className
         )}
       >
+        {/* Header with hamburger menu */}
+        <div className="flex items-center justify-between p-2 pt-4">
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 rounded-md transition-colors"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        </div>
+
         <div className="space-y-1">
           {/* System Items */}
-          <div className="pt-4" />
           {systemItems.map((item) => (
             <SidebarItem
               key={item.id}

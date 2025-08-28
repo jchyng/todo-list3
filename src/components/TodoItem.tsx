@@ -1,38 +1,38 @@
-import { FileText } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
-import { cn } from "@/lib/utils"
-import type { TodoItem as TodoItemType } from "@/types/todo"
-import { PriorityStarButton } from "./common"
+import { FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import type { TodoItem as TodoItemType } from "@/types/todo";
+import { PriorityStarButton } from "./common";
 
 interface TodoItemProps {
-  todo: TodoItemType
-  onToggleComplete?: (id: string) => void
-  onTogglePriority?: (id: string) => void
-  onClick?: (todo: TodoItemType) => void
-  className?: string
+  todo: TodoItemType;
+  onToggleComplete?: (id: string) => void;
+  onTogglePriority?: (id: string) => void;
+  onClick?: (todo: TodoItemType) => void;
+  className?: string;
 }
 
-export function TodoItem({ 
-  todo, 
-  onToggleComplete, 
+export function TodoItem({
+  todo,
+  onToggleComplete,
   onTogglePriority,
   onClick,
-  className 
+  className,
 }: TodoItemProps) {
   const handleToggleComplete = () => {
-    onToggleComplete?.(todo.id)
-  }
+    onToggleComplete?.(todo.id);
+  };
 
   const handleTogglePriority = () => {
-    onTogglePriority?.(todo.id)
-  }
+    onTogglePriority?.(todo.id);
+  };
 
-  const isPriorityHigh = todo.priority === 'high'
+  const isPriorityHigh = todo.priority === "high";
 
   return (
-    <div 
+    <div
       className={cn(
-        "flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer",
+        "flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer",
         todo.completed && "bg-gray-50",
         className
       )}
@@ -51,10 +51,12 @@ export function TodoItem({
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Title */}
-        <div className={cn(
-          "text-sm font-medium text-gray-900 mb-1",
-          todo.completed && "line-through text-gray-500"
-        )}>
+        <div
+          className={cn(
+            "text-sm font-medium text-gray-900 mb-1",
+            todo.completed && "line-through text-gray-500"
+          )}
+        >
           {todo.title}
         </div>
 
@@ -76,5 +78,5 @@ export function TodoItem({
         />
       </div>
     </div>
-  )
+  );
 }
