@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar"
 import { TodoItem } from "@/components/TodoItem"
 import { TodoDetailPanel } from "@/components/TodoDetailPanel"
 import { AddTodoInput } from "@/components/AddTodoInput"
+import { ColorPalette, type ColorValue } from "@/components/common"
 import type { TodoItem as TodoItemType } from "@/types/todo"
 import type { SidebarFilter } from "@/types/sidebar"
 
@@ -11,6 +12,13 @@ export function TodoPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTodo, setSelectedTodo] = useState<TodoItemType | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>('tasks')
+  
+  // 목록별 색상 관리
+  const [listColors, setListColors] = useState<Record<string, ColorValue>>({
+    'today': 'bg-blue-500',
+    'important': 'bg-red-500',
+    'tasks': 'bg-gray-400',
+  })
   
   // 샘플 데이터
   const [todos, setTodos] = useState<TodoItemType[]>([
@@ -103,6 +111,17 @@ export function TodoPage() {
     }
   }
 
+  const getCurrentListColor = (filter: SidebarFilter): ColorValue => {
+    return listColors[filter] || 'bg-gray-400'
+  }
+
+  const handleColorChange = (color: ColorValue) => {
+    setListColors(prev => ({
+      ...prev,
+      [selectedFilter]: color
+    }))
+  }
+
   const filteredTodos = todos.filter(todo => {
     // 검색 필터
     const matchesSearch = searchQuery === '' || todo.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -147,7 +166,20 @@ export function TodoPage() {
           {/* Todo List Panel */}
           <div className={`${selectedTodo ? 'flex-1' : 'flex-1'} p-4 transition-all duration-300 ${selectedTodo ? 'border-r border-gray-200' : ''}`}>
             <div className="flex flex-col space-y-4 h-full">
-              <h2 className="text-2xl font-bold">{getFilterTitle(selectedFilter)}</h2>
+              <div className="flex items-center gap-3">
+                <ColorPalette
+                  currentColor={getCurrentListColor(selectedFilter)}
+                  onColorChange={handleColorChange}
+                >
+                  <button className="flex-shrink-0">
+                    <div 
+                      className={`w-6 h-6 rounded-full transition-all hover:scale-110 ${getCurrentListColor(selectedFilter)}`}
+                      title="목록 색상 변경"
+                    />
+                  </button>
+                </ColorPalette>
+                <h2 className="text-2xl font-bold">{getFilterTitle(selectedFilter)}</h2>
+              </div>
               {searchQuery && (
                 <p className="text-sm text-muted-foreground">
                   검색: "{searchQuery}"
