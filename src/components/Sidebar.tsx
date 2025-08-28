@@ -31,17 +31,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./ui/context-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirmDialog } from "./common";
 
 interface SidebarProps {
   selectedFilter: SidebarFilter;
@@ -80,8 +70,8 @@ function SidebarItem({
   isNested = false,
 }: SidebarItemProps) {
   const handleDeleteList = () => {
-    console.log("목록 삭제:", id, name);
     // 실제 삭제 로직은 나중에 구현
+    console.log(`삭제 예정 - ID: ${id}, Name: ${name}`);
   };
 
   return (
@@ -121,8 +111,8 @@ function SidebarItem({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <DeleteConfirmDialog
+          trigger={
             <ContextMenuItem
               className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50"
               onSelect={(e) => e.preventDefault()}
@@ -132,29 +122,11 @@ function SidebarItem({
                 목록 삭제
               </div>
             </ContextMenuItem>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="max-w-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                "{name}"이(가) 영구적으로 삭제됩니다.
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                이 작업은 취소할 수 없습니다.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="gap-3 sm:gap-3">
-              <AlertDialogCancel className="px-6 py-2 font-extrabold">
-                취소
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteList}
-                className="px-6 py-2 bg-red-700 hover:bg-red-800 font-extrabold"
-              >
-                목록 삭제
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          }
+          title={`"${name}"이(가) 영구적으로 삭제됩니다.`}
+          onConfirm={handleDeleteList}
+          confirmText="목록 삭제"
+        />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -299,7 +271,6 @@ export function Sidebar({
   const handleSaveGroup = () => {
     if (newGroupName.trim()) {
       // 여기에 실제 그룹 추가 로직이 들어갈 예정
-      console.log("새 그룹 추가:", newGroupName);
       setNewGroupName("");
     }
     setIsAddingGroup(false);
@@ -332,8 +303,8 @@ export function Sidebar({
   };
 
   const handleDeleteGroup = (groupId: string) => {
-    console.log("그룹 해제:", groupId);
     // 실제 그룹 해제 로직은 나중에 구현
+    console.log(`그룹 해제 예정 - GroupID: ${groupId}`);
   };
 
   return (

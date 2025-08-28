@@ -7,7 +7,6 @@ export function Landing() {
 
   const handleGoogleLogin = () => {
     // TODO: Google 로그인 구현
-    console.log("Google 로그인 시작")
     // 임시로 todo 페이지로 이동
     navigate("/todo")
   }

@@ -112,7 +112,7 @@ export function TodoPage() {
     switch (selectedFilter) {
       case 'today':
         // 오늘 날짜에 해당하는 할 일들
-        matchesFilter = todo.dueDate && new Date(todo.dueDate).toDateString() === new Date().toDateString()
+        matchesFilter = Boolean(todo.dueDate && new Date(todo.dueDate).toDateString() === new Date().toDateString())
         break
       case 'important':
         matchesFilter = todo.priority === 'high'

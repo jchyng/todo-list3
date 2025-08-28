@@ -1,7 +1,8 @@
-import { Star, FileText } from "lucide-react"
+import { FileText } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import type { TodoItem as TodoItemType } from "@/types/todo"
+import { PriorityStarButton } from "./common"
 
 interface TodoItemProps {
   todo: TodoItemType
@@ -68,23 +69,11 @@ export function TodoItem({
 
       {/* Priority Star */}
       <div className="flex-shrink-0">
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            handleTogglePriority()
-          }}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
-          aria-label={isPriorityHigh ? "우선순위 해제" : "우선순위 설정"}
-        >
-          <Star 
-            className={cn(
-              "h-5 w-5 transition-colors",
-              isPriorityHigh 
-                ? "fill-blue-500 text-blue-500" 
-                : "text-gray-300 hover:text-gray-400"
-            )}
-          />
-        </button>
+        <PriorityStarButton
+          isPriority={isPriorityHigh}
+          onToggle={handleTogglePriority}
+          size="md"
+        />
       </div>
     </div>
   )
