@@ -1,7 +1,20 @@
 import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  closestCenter,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
@@ -9,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { SidebarFilter, SidebarGroup } from "@/types/sidebar";
+import type { SidebarFilter, SidebarGroup, SidebarList } from "@/types/sidebar";
 import {
   CheckSquare,
   ChevronDown,
@@ -23,6 +36,7 @@ import {
   Star,
   Sun,
   Trash2Icon,
+  GripVertical,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -49,6 +63,11 @@ interface SidebarItemProps {
   isSelected: boolean;
   onClick: () => void;
   isNested?: boolean;
+  isDragOverlay?: boolean;
+}
+
+interface DragOverlayItemProps {
+  activeItem: SidebarList | null;
 }
 
 interface SidebarGroupProps {
@@ -58,50 +77,78 @@ interface SidebarGroupProps {
   onFilterChange: (filter: SidebarFilter) => void;
   isSelected: (filterId: string) => boolean;
   onDelete: () => void;
+  onUpdateGroups: (groups: SidebarGroup[]) => void;
+  allGroups: SidebarGroup[];
 }
 
-function SidebarItem({
+function DraggableSidebarItem({
   id,
   name,
   count,
-  icon: Icon,
   colorDot,
   isSelected,
   onClick,
   isNested = false,
-}: SidebarItemProps) {
+}: Omit<SidebarItemProps, "icon" | "isDragOverlay">) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const handleDeleteList = () => {
     console.log(`삭제 예정 - ID: ${id}, Name: ${name}`);
   };
 
   const content = (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
         "w-full rounded transition-colors relative select-none",
-        isSelected && "bg-blue-100 text-blue-700"
+        isSelected && "bg-blue-100 text-blue-700",
+        isDragging && "opacity-50"
       )}
     >
       {isSelected && (
         <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-blue-600" />
       )}
       <div
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
         className={cn(
-          "flex items-center justify-between py-2 cursor-pointer hover:bg-gray-100 transition-colors",
-          isNested ? "pl-10 pr-4" : "px-4"
+          "flex items-center justify-between py-2 hover:bg-gray-100 transition-colors",
+          isNested ? "pl-6 pr-4" : "px-4"
         )}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+          <button
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-3 w-3 text-gray-400" />
+          </button>
           {colorDot && (
             <div
               className={cn("w-3 h-3 rounded-full flex-shrink-0", colorDot)}
             />
           )}
-          <span className="text-sm truncate">{name}</span>
+          <span
+            className="text-sm truncate cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+          >
+            {name}
+          </span>
         </div>
         {count !== undefined && (
           <span className="text-xs text-gray-500 flex-shrink-0">{count}</span>
@@ -135,6 +182,109 @@ function SidebarItem({
   );
 }
 
+function SidebarItem({
+  id,
+  name,
+  count,
+  icon: Icon,
+  colorDot,
+  isSelected,
+  onClick,
+  isNested = false,
+  isDragOverlay = false,
+}: SidebarItemProps) {
+  const handleDeleteList = () => {
+    console.log(`삭제 예정 - ID: ${id}, Name: ${name}`);
+  };
+
+  const content = (
+    <div
+      className={cn(
+        "w-full rounded transition-colors relative select-none",
+        isSelected && "bg-blue-100 text-blue-700",
+        isDragOverlay && "shadow-lg border"
+      )}
+    >
+      {isSelected && (
+        <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-blue-600" />
+      )}
+      <div
+        onClick={
+          !isDragOverlay
+            ? (e) => {
+                e.stopPropagation();
+                onClick();
+              }
+            : undefined
+        }
+        className={cn(
+          "flex items-center justify-between py-2 transition-colors",
+          isNested ? "pl-10 pr-4" : "px-4",
+          !isDragOverlay && "cursor-pointer hover:bg-gray-100"
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+          {colorDot && (
+            <div
+              className={cn("w-3 h-3 rounded-full flex-shrink-0", colorDot)}
+            />
+          )}
+          <span className="text-sm truncate">{name}</span>
+        </div>
+        {count !== undefined && (
+          <span className="text-xs text-gray-500 flex-shrink-0">{count}</span>
+        )}
+      </div>
+    </div>
+  );
+
+  if (isDragOverlay) {
+    return content;
+  }
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger>{content}</ContextMenuTrigger>
+      <ContextMenuContent>
+        <DeleteConfirmDialog
+          trigger={
+            <ContextMenuItem
+              className="text-red-700 focus:text-red-800 focus:bg-red-50 data-[highlighted]:text-red-800 data-[highlighted]:bg-red-50"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <div className="flex gap-3 items-center">
+                <Trash2Icon className="text-red-700" />
+                목록 삭제
+              </div>
+            </ContextMenuItem>
+          }
+          title={`"${name}"이(가) 영구적으로 삭제됩니다.`}
+          onConfirm={handleDeleteList}
+          confirmText="목록 삭제"
+        />
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
+function DragOverlayItem({ activeItem }: DragOverlayItemProps) {
+  if (!activeItem) return null;
+
+  return (
+    <SidebarItem
+      id={activeItem.id}
+      name={activeItem.name}
+      count={activeItem.count}
+      colorDot="bg-orange-400"
+      isSelected={false}
+      onClick={() => {}}
+      isNested={true}
+      isDragOverlay={true}
+    />
+  );
+}
+
 function SidebarGroup({
   group,
   isExpanded,
@@ -142,7 +292,78 @@ function SidebarGroup({
   onFilterChange,
   isSelected,
   onDelete,
+  onUpdateGroups,
+  allGroups,
 }: SidebarGroupProps) {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const activeListId = active.id as string;
+    const overListId = over.id as string;
+
+    const newGroups = [...allGroups];
+    const sourceGroup = newGroups.find((g) =>
+      g.lists.some((l) => l.id === activeListId)
+    );
+    const targetGroup = newGroups.find((g) => g.id === group.id);
+
+    if (!sourceGroup || !targetGroup) return;
+
+    // Same group reordering
+    if (sourceGroup.id === targetGroup.id) {
+      const groupIndex = newGroups.findIndex((g) => g.id === sourceGroup.id);
+      if (groupIndex === -1) return;
+
+      const oldIndex = sourceGroup.lists.findIndex(
+        (l) => l.id === activeListId
+      );
+      const newIndex = sourceGroup.lists.findIndex((l) => l.id === overListId);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        newGroups[groupIndex].lists = arrayMove(
+          sourceGroup.lists,
+          oldIndex,
+          newIndex
+        );
+        onUpdateGroups(newGroups);
+      }
+      return;
+    }
+
+    // Moving between different groups
+    const sourceList = sourceGroup.lists.find((l) => l.id === activeListId);
+    if (!sourceList) return;
+
+    // Remove from source
+    const sourceGroupIndex = newGroups.findIndex(
+      (g) => g.id === sourceGroup.id
+    );
+    if (sourceGroupIndex !== -1) {
+      newGroups[sourceGroupIndex].lists = sourceGroup.lists.filter(
+        (l) => l.id !== activeListId
+      );
+    }
+
+    // Add to target
+    const targetGroupIndex = newGroups.findIndex(
+      (g) => g.id === targetGroup.id
+    );
+    if (targetGroupIndex !== -1) {
+      const overIndex = targetGroup.lists.findIndex((l) => l.id === overListId);
+      const updatedList = { ...sourceList, groupId: targetGroup.id };
+
+      if (overIndex >= 0) {
+        newGroups[targetGroupIndex].lists.splice(overIndex, 0, updatedList);
+      } else {
+        newGroups[targetGroupIndex].lists.push(updatedList);
+      }
+    }
+
+    onUpdateGroups(newGroups);
+  };
+
   return (
     <div className="relative">
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
@@ -150,7 +371,7 @@ function SidebarGroup({
           <ContextMenuTrigger>
             <div className="w-full rounded hover:bg-gray-100 transition-colors relative p-2 select-none">
               <div className="flex items-center justify-between px-2 py-1">
-                <div 
+                <div
                   className="flex items-center gap-2 flex-1 cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -164,7 +385,7 @@ function SidebarGroup({
                   )}
                   <span className="text-sm font-medium">{group.name}</span>
                 </div>
-                <div 
+                <div
                   className="cursor-pointer p-1"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -193,19 +414,32 @@ function SidebarGroup({
           </ContextMenuContent>
         </ContextMenu>
 
-        <CollapsibleContent className="space-y-1 px-2 pb-2">
-          {group.lists.map((list) => (
-            <SidebarItem
-              key={list.id}
-              id={list.id}
-              name={list.name}
-              count={list.count}
-              colorDot="bg-orange-400"
-              isSelected={isSelected(list.id)}
-              onClick={() => onFilterChange(list.id)}
-              isNested={true}
-            />
-          ))}
+        <CollapsibleContent className="px-2 pb-2">
+          <DndContext
+            sensors={[useSensor(PointerSensor)]}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={group.lists.map((l) => l.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-1">
+                {group.lists.map((list) => (
+                  <DraggableSidebarItem
+                    key={list.id}
+                    id={list.id}
+                    name={list.name}
+                    count={list.count}
+                    colorDot="bg-orange-400"
+                    isSelected={isSelected(list.id)}
+                    onClick={() => onFilterChange(list.id)}
+                    isNested={true}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </CollapsibleContent>
       </Collapsible>
     </div>
@@ -225,9 +459,8 @@ export function Sidebar({
   const [newGroupName, setNewGroupName] = useState("");
   const newGroupInputRef = useRef<HTMLInputElement>(null);
   const [newListName, setNewListName] = useState("");
-
-  // 샘플 데이터
-  const groups: SidebarGroup[] = [
+  const [activeItem, setActiveItem] = useState<SidebarList | null>(null);
+  const [groups, setGroups] = useState<SidebarGroup[]>([
     {
       id: "work",
       name: "공부",
@@ -251,9 +484,8 @@ export function Sidebar({
         { id: "writing", name: "글쓰기", count: 1, groupId: "personal" },
       ],
     },
-  ];
-
-  const individualLists = [
+  ]);
+  const [individualLists, setIndividualLists] = useState([
     { id: "ideas", name: "아이디어", count: 5, colorDot: "bg-blue-400" },
     {
       id: "shopping",
@@ -262,13 +494,140 @@ export function Sidebar({
       colorDot: "bg-gray-400",
     },
     { id: "daily", name: "나중에 할 일", count: 1, colorDot: "bg-red-400" },
-  ];
+  ]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const systemItems = [
     { id: "today", name: "오늘 할 일", icon: Sun, count: 5 },
     { id: "important", name: "중요", icon: Star, count: 3 },
     { id: "tasks", name: "작업", icon: CheckSquare, count: 12 },
   ];
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeListId = active.id as string;
+
+    // Find active item in groups
+    for (const group of groups) {
+      const foundList = group.lists.find((l) => l.id === activeListId);
+      if (foundList) {
+        setActiveItem(foundList);
+        return;
+      }
+    }
+
+    // Find active item in individual lists
+    const foundIndividualList = individualLists.find(
+      (l) => l.id === activeListId
+    );
+    if (foundIndividualList) {
+      setActiveItem({
+        id: foundIndividualList.id,
+        name: foundIndividualList.name,
+        count: foundIndividualList.count,
+      });
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveItem(null);
+
+    if (!over || active.id === over.id) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Handle moving between individual lists
+    if (
+      individualLists.some((l) => l.id === activeId) &&
+      individualLists.some((l) => l.id === overId)
+    ) {
+      const oldIndex = individualLists.findIndex((l) => l.id === activeId);
+      const newIndex = individualLists.findIndex((l) => l.id === overId);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setIndividualLists(arrayMove(individualLists, oldIndex, newIndex));
+      }
+      return;
+    }
+
+    // Handle moving from individual lists to groups or between groups
+    const sourceFromIndividual = individualLists.find((l) => l.id === activeId);
+    if (sourceFromIndividual) {
+      // Remove from individual lists
+      setIndividualLists((prev) => prev.filter((l) => l.id !== activeId));
+
+      // Add to target group
+      const targetGroup = groups.find(
+        (g) => g.lists.some((l) => l.id === overId) || g.id === overId
+      );
+      if (targetGroup) {
+        const newGroups = [...groups];
+        const groupIndex = newGroups.findIndex((g) => g.id === targetGroup.id);
+        if (groupIndex !== -1) {
+          const newList: SidebarList = {
+            id: sourceFromIndividual.id,
+            name: sourceFromIndividual.name,
+            count: sourceFromIndividual.count,
+            groupId: targetGroup.id,
+          };
+          newGroups[groupIndex].lists.push(newList);
+          setGroups(newGroups);
+        }
+      }
+      return;
+    }
+
+    // Handle moving from groups to individual lists
+    const sourceGroup = groups.find((g) =>
+      g.lists.some((l) => l.id === activeId)
+    );
+    const targetInIndividual = individualLists.some((l) => l.id === overId);
+
+    if (sourceGroup && targetInIndividual) {
+      const sourceList = sourceGroup.lists.find((l) => l.id === activeId);
+      if (sourceList) {
+        // Remove from group
+        const newGroups = [...groups];
+        const groupIndex = newGroups.findIndex((g) => g.id === sourceGroup.id);
+        if (groupIndex !== -1) {
+          newGroups[groupIndex].lists = newGroups[groupIndex].lists.filter(
+            (l) => l.id !== activeId
+          );
+          setGroups(newGroups);
+        }
+
+        // Add to individual lists
+        const targetIndex = individualLists.findIndex((l) => l.id === overId);
+        const newIndividualList = {
+          id: sourceList.id,
+          name: sourceList.name,
+          count: sourceList.count,
+          colorDot: "bg-orange-400",
+        };
+
+        if (targetIndex !== -1) {
+          const newIndividualLists = [...individualLists];
+          newIndividualLists.splice(targetIndex, 0, newIndividualList);
+          setIndividualLists(newIndividualLists);
+        } else {
+          setIndividualLists([...individualLists, newIndividualList]);
+        }
+      }
+    }
+  };
+
+  const handleUpdateGroups = (newGroups: SidebarGroup[]) => {
+    setGroups(newGroups);
+  };
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => {
@@ -280,6 +639,15 @@ export function Sidebar({
       }
       return newSet;
     });
+
+    // Update the groups state to reflect expansion changes
+    setGroups((prev) =>
+      prev.map((group) =>
+        group.id === groupId
+          ? { ...group, isExpanded: !group.isExpanded }
+          : group
+      )
+    );
   };
 
   const isSelected = (filterId: string) => selectedFilter === filterId;
@@ -337,6 +705,12 @@ export function Sidebar({
 
   return (
     <TooltipProvider>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <div
           className={cn(
             "w-64 h-full bg-gray-50 border-r border-gray-200 flex flex-col select-none",
@@ -375,17 +749,23 @@ export function Sidebar({
             {/* User Lists and Groups */}
             <div className="space-y-1">
               {/* Individual Lists */}
-              {individualLists.map((list) => (
-                <SidebarItem
-                  key={list.id}
-                  id={list.id}
-                  name={list.name}
-                  count={list.count}
-                  colorDot={list.colorDot}
-                  isSelected={isSelected(list.id)}
-                  onClick={() => onFilterChange(list.id)}
-                />
-              ))}
+              <SortableContext
+                items={individualLists.map((l) => l.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {individualLists.map((list) => (
+                  <DraggableSidebarItem
+                    key={list.id}
+                    id={list.id}
+                    name={list.name}
+                    count={list.count}
+                    colorDot={list.colorDot}
+                    isSelected={isSelected(list.id)}
+                    onClick={() => onFilterChange(list.id)}
+                    isNested={false}
+                  />
+                ))}
+              </SortableContext>
 
               {/* Groups */}
               {groups.map((group) => (
@@ -397,6 +777,8 @@ export function Sidebar({
                   onFilterChange={onFilterChange}
                   isSelected={isSelected}
                   onDelete={() => handleDeleteGroup(group.id)}
+                  onUpdateGroups={handleUpdateGroups}
+                  allGroups={groups}
                 />
               ))}
 
@@ -463,6 +845,11 @@ export function Sidebar({
             </div>
           </div>
         </div>
+
+        <DragOverlay>
+          <DragOverlayItem activeItem={activeItem} />
+        </DragOverlay>
+      </DndContext>
     </TooltipProvider>
   );
 }
