@@ -117,7 +117,7 @@ function DraggableSidebarItem({
     <div
       onClick={onClick}
       className={cn(
-        "w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative",
+        "w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative select-none",
         isSelected && "bg-blue-100 text-blue-700",
         isDragging && "opacity-50"
       )}
@@ -287,7 +287,7 @@ function DroppableGroup({
           <ContextMenu>
             <ContextMenuTrigger>
               <CollapsibleTrigger asChild>
-                <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative p-2">
+                <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative p-2 select-none">
                   <div className="flex items-center justify-between px-2 py-1">
                     <div className="flex items-center gap-2 flex-1">
                       {isExpanded ? (
@@ -924,7 +924,7 @@ export function Sidebar({
       >
         <div
           className={cn(
-            "w-64 h-full bg-gray-50 border-r border-gray-200 flex flex-col",
+            "w-64 h-full bg-gray-50 border-r border-gray-200 flex flex-col select-none",
             className
           )}
         >

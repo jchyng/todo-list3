@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, ChevronRight } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { TodoItem } from "@/components/TodoItem";
@@ -16,6 +16,7 @@ export function TodoPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
 
   // 목록별 색상 관리
   const [listColors, setListColors] = useState<Record<string, ColorValue>>({
@@ -44,6 +45,56 @@ export function TodoPage() {
       priority: "low",
       status: "pending",
       createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "3",
+      title: "자원섭 재촬",
+      description: "촬영 일정 조정 및 장비 준비",
+      completed: true,
+      priority: "high",
+      status: "completed",
+      createdAt: new Date(Date.now() - 86400000), // 1일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "4",
+      title: "Notion에 오늘 할 작업계획하기",
+      description: undefined,
+      completed: true,
+      priority: "low",
+      status: "completed",
+      createdAt: new Date(Date.now() - 172800000), // 2일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "5",
+      title: "스트레칭",
+      description: undefined,
+      completed: true,
+      priority: "low",
+      status: "completed",
+      createdAt: new Date(Date.now() - 259200000), // 3일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "6",
+      title: "코드 리팩토링",
+      description: "레거시 코드 정리 및 최적화",
+      completed: true,
+      priority: "medium",
+      status: "completed",
+      createdAt: new Date(Date.now() - 345600000), // 4일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "7",
+      title: "회의 준비",
+      description: "발표 자료 준비",
+      completed: true,
+      priority: "high",
+      status: "completed",
+      createdAt: new Date(Date.now() - 432000000), // 5일 전
       updatedAt: new Date(),
     },
   ]);
@@ -192,6 +243,10 @@ export function TodoPage() {
     return matchesSearch && matchesFilter;
   });
 
+  // 완료된 할 일과 미완료 할 일 분리
+  const incompleteTodos = filteredTodos.filter(todo => !todo.completed);
+  const completedTodos = filteredTodos.filter(todo => todo.completed);
+
   return (
     <div className="h-screen bg-background flex flex-col">
       <Header
@@ -272,8 +327,9 @@ export function TodoPage() {
               {/* Todo List */}
               <div className="flex-1 overflow-y-auto">
                 <div className="space-y-2">
-                  {filteredTodos.length > 0 ? (
-                    filteredTodos.map((todo) => (
+                  {/* 미완료 할 일 */}
+                  {incompleteTodos.length > 0 ? (
+                    incompleteTodos.map((todo) => (
                       <TodoItem
                         key={todo.id}
                         todo={todo}
@@ -282,7 +338,41 @@ export function TodoPage() {
                         onClick={handleSelectTodo}
                       />
                     ))
-                  ) : (
+                  ) : null}
+
+                  {/* 완료된 할 일 접기/펼치기 */}
+                  {completedTodos.length > 0 && (
+                    <div className="mt-4">
+                      <button
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 w-full text-left"
+                        onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
+                      >
+                        <ChevronRight 
+                          className={`h-4 w-4 transition-transform ${
+                            isCompletedExpanded ? "rotate-90" : ""
+                          }`} 
+                        />
+                        완료됨 {completedTodos.length}
+                      </button>
+                      
+                      {isCompletedExpanded && (
+                        <div className="space-y-2 mt-2">
+                          {completedTodos.map((todo) => (
+                            <TodoItem
+                              key={todo.id}
+                              todo={todo}
+                              onToggleComplete={handleToggleComplete}
+                              onTogglePriority={handleTogglePriority}
+                              onClick={handleSelectTodo}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 빈 상태 */}
+                  {filteredTodos.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">
                       {searchQuery
                         ? "검색 결과가 없습니다."
