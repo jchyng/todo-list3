@@ -71,7 +71,6 @@ interface SidebarItemProps {
   isDraggable?: boolean;
 }
 
-
 interface SidebarGroupProps {
   group: SidebarGroup;
   isExpanded: boolean;
@@ -92,21 +91,13 @@ function DraggableSidebarItem({
   isNested = false,
   isDraggable = false,
 }: SidebarItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id,
     disabled: !isDraggable,
   });
 
-  // 드래그 중에도 아이템이 움직이지 않도록 transform을 제거
-  const style = {
-    transition,
-  };
+  // 드래그 중에도 아이템이 움직이지 않도록 스타일 제거
+  const style = {};
 
   const handleDeleteList = () => {
     // 실제 삭제 로직은 나중에 구현
@@ -115,9 +106,8 @@ function DraggableSidebarItem({
 
   const content = (
     <div
-      onClick={onClick}
       className={cn(
-        "w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative select-none",
+        "w-full rounded transition-colors relative select-none",
         isSelected && "bg-blue-100 text-blue-700",
         isDragging && "opacity-50"
       )}
@@ -126,8 +116,12 @@ function DraggableSidebarItem({
         <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-blue-600" />
       )}
       <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
         className={cn(
-          "flex items-center justify-between py-2",
+          "flex items-center justify-between py-2 cursor-pointer hover:bg-gray-100 transition-colors",
           isNested ? "pl-10 pr-4" : "px-4"
         )}
       >
@@ -141,9 +135,7 @@ function DraggableSidebarItem({
           <span className="text-sm truncate">{name}</span>
         </div>
         {count !== undefined && (
-          <span className="text-xs text-gray-500 flex-shrink-0">
-            {count}
-          </span>
+          <span className="text-xs text-gray-500 flex-shrink-0">{count}</span>
         )}
       </div>
     </div>
@@ -152,9 +144,7 @@ function DraggableSidebarItem({
   if (!isDraggable) {
     return (
       <ContextMenu>
-        <ContextMenuTrigger>
-          {content}
-        </ContextMenuTrigger>
+        <ContextMenuTrigger>{content}</ContextMenuTrigger>
         <ContextMenuContent>
           <DeleteConfirmDialog
             trigger={
@@ -180,12 +170,7 @@ function DraggableSidebarItem({
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <div
-          ref={setNodeRef}
-          style={style}
-          {...attributes}
-          {...listeners}
-        >
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
           {content}
         </div>
       </ContextMenuTrigger>
@@ -219,12 +204,12 @@ function SidebarItem(props: SidebarItemProps) {
 // 그룹 헤더 위쪽 드롭 영역
 function GroupTopDropZone({
   groupId,
-  dropIndicator
+  dropIndicator,
 }: {
   groupId: string;
   dropIndicator: {
-    type: 'line' | 'group';
-    position?: 'above' | 'below';
+    type: "line" | "group";
+    position?: "above" | "below";
     targetId?: string;
     groupId?: string;
   } | null;
@@ -233,21 +218,18 @@ function GroupTopDropZone({
     id: `group-top-${groupId}`,
   });
 
-  const showIndicator = dropIndicator?.type === 'line' && 
-                       dropIndicator?.targetId === `group-top-${groupId}`;
+  const showIndicator =
+    dropIndicator?.type === "line" &&
+    dropIndicator?.targetId === `group-top-${groupId}`;
 
   return (
-    <div
-      ref={setNodeRef}
-      className="h-2 transition-colors relative"
-    >
+    <div ref={setNodeRef} className="h-2 transition-colors relative">
       {(showIndicator || isOver) && (
         <DropIndicator type="line" position="above" />
       )}
     </div>
   );
 }
-
 
 function DroppableGroup({
   group,
@@ -259,8 +241,8 @@ function DroppableGroup({
   dropIndicator,
 }: SidebarGroupProps & {
   dropIndicator: {
-    type: 'line' | 'group';
-    position?: 'above' | 'below';
+    type: "line" | "group";
+    position?: "above" | "below";
     targetId?: string;
     groupId?: string;
   } | null;
@@ -275,14 +257,14 @@ function DroppableGroup({
     <div className="relative">
       {/* 그룹 헤더 위쪽 드롭 영역 */}
       <GroupTopDropZone groupId={group.id} dropIndicator={dropIndicator} />
-      
-      <div 
+
+      <div
         ref={setNodeRef}
         className="droppable-group transition-colors relative rounded"
         data-group-id={group.id}
       >
         {/* 그룹 드롭 시 시각적 피드백 없음 - 가로선만 사용 */}
-        
+
         <Collapsible open={isExpanded} onOpenChange={onToggle}>
           <ContextMenu>
             <ContextMenuTrigger>
@@ -319,22 +301,26 @@ function DroppableGroup({
             </ContextMenuContent>
           </ContextMenu>
 
-          <CollapsibleContent className="space-y-1 px-2 pb-2">            
+          <CollapsibleContent className="space-y-1 px-2 pb-2">
             <SortableContext items={group.lists.map((list) => list.id)}>
               {/* 그룹이 비어있을 때도 드롭 영역 제공 */}
               {group.lists.length === 0 && (
                 <div className="h-8 w-full rounded" />
               )}
-              
+
               {group.lists.map((list) => (
                 <div key={list.id} className="relative">
                   {/* 그룹 내 목록 위쪽 드롭 인디케이터 */}
-                  {dropIndicator?.type === 'line' && 
-                   dropIndicator?.targetId === list.id && 
-                   dropIndicator?.position === 'above' && (
-                    <DropIndicator type="line" position="above" nested={true} />
-                  )}
-                  
+                  {dropIndicator?.type === "line" &&
+                    dropIndicator?.targetId === list.id &&
+                    dropIndicator?.position === "above" && (
+                      <DropIndicator
+                        type="line"
+                        position="above"
+                        nested={true}
+                      />
+                    )}
+
                   <DraggableSidebarItem
                     id={list.id}
                     name={list.name}
@@ -345,13 +331,17 @@ function DroppableGroup({
                     isNested={true}
                     isDraggable={true}
                   />
-                  
+
                   {/* 그룹 내 목록 아래쪽 드롭 인디케이터 */}
-                  {dropIndicator?.type === 'line' && 
-                   dropIndicator?.targetId === list.id && 
-                   dropIndicator?.position === 'below' && (
-                    <DropIndicator type="line" position="below" nested={true} />
-                  )}
+                  {dropIndicator?.type === "line" &&
+                    dropIndicator?.targetId === list.id &&
+                    dropIndicator?.position === "below" && (
+                      <DropIndicator
+                        type="line"
+                        position="below"
+                        nested={true}
+                      />
+                    )}
                 </div>
               ))}
             </SortableContext>
@@ -362,45 +352,48 @@ function DroppableGroup({
   );
 }
 
-
 // 기존 함수명 유지를 위한 래퍼
-function SidebarGroup(props: SidebarGroupProps & {
-  dropIndicator: {
-    type: 'line' | 'group';
-    position?: 'above' | 'below';
-    targetId?: string;
-    groupId?: string;
-  } | null;
-}) {
+function SidebarGroup(
+  props: SidebarGroupProps & {
+    dropIndicator: {
+      type: "line" | "group";
+      position?: "above" | "below";
+      targetId?: string;
+      groupId?: string;
+    } | null;
+  }
+) {
   return <DroppableGroup {...props} />;
 }
 
 // 드롭 인디케이터 컴포넌트
-function DropIndicator({ 
-  type, 
+function DropIndicator({
+  type,
   position,
-  nested = false
+  nested = false,
 }: {
-  type: 'line' | 'group';
-  position?: 'above' | 'below';
-  nested?: boolean;  // 그룹 내부에서 들여쓰기 적용할지 여부
+  type: "line" | "group";
+  position?: "above" | "below";
+  nested?: boolean; // 그룹 내부에서 들여쓰기 적용할지 여부
 }) {
-  if (type === 'line') {
+  if (type === "line") {
     return (
-      <div className={cn(
-        "absolute right-0 h-0.5 bg-blue-500 z-10",
-        position === 'above' ? "-top-0.5" : "-bottom-0.5",
-        nested ? "left-10" : "left-0"  // 그룹 내부면 pl-10에 맞춰 left-10 적용
-      )} />
+      <div
+        className={cn(
+          "absolute right-0 h-0.5 bg-blue-500 z-10",
+          position === "above" ? "-top-0.5" : "-bottom-0.5",
+          nested ? "left-10" : "left-0" // 그룹 내부면 pl-10에 맞춰 left-10 적용
+        )}
+      />
     );
   }
-  
-  if (type === 'group') {
+
+  if (type === "group") {
     return (
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 z-10" />
     );
   }
-  
+
   return null;
 }
 
@@ -411,18 +404,23 @@ function DroppableIndividualArea({
   onFilterChange,
   dropIndicator,
 }: {
-  individualLists: Array<{ id: string; name: string; count: number; colorDot: string }>;
+  individualLists: Array<{
+    id: string;
+    name: string;
+    count: number;
+    colorDot: string;
+  }>;
   isSelected: (filterId: string) => boolean;
   onFilterChange: (filter: SidebarFilter) => void;
   dropIndicator: {
-    type: 'line' | 'group';
-    position?: 'above' | 'below';
+    type: "line" | "group";
+    position?: "above" | "below";
     targetId?: string;
     groupId?: string;
   } | null;
 }) {
   const { isOver, setNodeRef } = useDroppable({
-    id: 'individual-area',
+    id: "individual-area",
   });
 
   return (
@@ -433,16 +431,16 @@ function DroppableIndividualArea({
         isOver && "bg-blue-50"
       )}
     >
-      <SortableContext items={individualLists.map(list => list.id)}>
+      <SortableContext items={individualLists.map((list) => list.id)}>
         {individualLists.map((list) => (
           <div key={list.id} className="relative">
             {/* 위쪽 드롭 인디케이터 */}
-            {dropIndicator?.type === 'line' && 
-             dropIndicator?.targetId === list.id && 
-             dropIndicator?.position === 'above' && (
-              <DropIndicator type="line" position="above" />
-            )}
-            
+            {dropIndicator?.type === "line" &&
+              dropIndicator?.targetId === list.id &&
+              dropIndicator?.position === "above" && (
+                <DropIndicator type="line" position="above" />
+              )}
+
             <DraggableSidebarItem
               id={list.id}
               name={list.name}
@@ -452,17 +450,17 @@ function DroppableIndividualArea({
               onClick={() => onFilterChange(list.id)}
               isDraggable={true}
             />
-            
+
             {/* 아래쪽 드롭 인디케이터 */}
-            {dropIndicator?.type === 'line' && 
-             dropIndicator?.targetId === list.id && 
-             dropIndicator?.position === 'below' && (
-              <DropIndicator type="line" position="below" />
-            )}
+            {dropIndicator?.type === "line" &&
+              dropIndicator?.targetId === list.id &&
+              dropIndicator?.position === "below" && (
+                <DropIndicator type="line" position="below" />
+              )}
           </div>
         ))}
       </SortableContext>
-      
+
       {/* 빈 영역에 드롭할 때도 별도 표시 없이 처리 */}
     </div>
   );
@@ -483,14 +481,19 @@ export function Sidebar({
   const [newListName, setNewListName] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<{
-    type: 'line' | 'group';
-    position?: 'above' | 'below';
+    type: "line" | "group";
+    position?: "above" | "below";
     targetId?: string;
     groupId?: string;
   } | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 110, // 300ms 이상 눌러야 드래그 시작 (길게 누르기)
+        tolerance: 5, // 5픽셀 허용 오차
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -525,7 +528,12 @@ export function Sidebar({
 
   const [individualLists, setIndividualLists] = useState([
     { id: "ideas", name: "아이디어", count: 5, colorDot: "bg-blue-400" },
-    { id: "shopping", name: "시가시 청자와할 물건", count: 3, colorDot: "bg-gray-400" },
+    {
+      id: "shopping",
+      name: "시가시 청자와할 물건",
+      count: 3,
+      colorDot: "bg-gray-400",
+    },
     { id: "daily", name: "나중에 할 일", count: 1, colorDot: "bg-red-400" },
   ]);
 
@@ -608,7 +616,7 @@ export function Sidebar({
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    
+
     if (!over) {
       setDropIndicator(null);
       return;
@@ -624,25 +632,33 @@ export function Sidebar({
     }
 
     // 드롭 타겟 분석
-    const overGroupId = overId.startsWith('group-') && !overId.startsWith('group-top-') 
-      ? overId.replace('group-', '') : null;
-    const overGroup = overGroupId ? groups.find(group => group.id === overGroupId) : null;
-    
+    const overGroupId =
+      overId.startsWith("group-") && !overId.startsWith("group-top-")
+        ? overId.replace("group-", "")
+        : null;
+    const overGroup = overGroupId
+      ? groups.find((group) => group.id === overGroupId)
+      : null;
+
     // 그룹 상단 드롭 영역인지 확인
-    const overGroupTopId = overId.startsWith('group-top-') ? overId.replace('group-top-', '') : null;
-    
+    const overGroupTopId = overId.startsWith("group-top-")
+      ? overId.replace("group-top-", "")
+      : null;
+
     // 개별 영역으로 드롭하는 경우 확인
-    const isOverIndividualArea = overId === 'individual-area';
-    
+    const isOverIndividualArea = overId === "individual-area";
+
     // 드롭 타겟이 개별 아이템인지 확인
-    const overIndividual = individualLists.find(list => list.id === overId);
-    const overGroupItem = groups.flatMap(g => g.lists).find(list => list.id === overId);
-    
+    const overIndividual = individualLists.find((list) => list.id === overId);
+    const overGroupItem = groups
+      .flatMap((g) => g.lists)
+      .find((list) => list.id === overId);
+
     if (overGroupTopId) {
       // 그룹 상단에 드롭하는 경우 - 선 인디케이터 표시
       setDropIndicator({
-        type: 'line',
-        targetId: `group-top-${overGroupTopId}`
+        type: "line",
+        targetId: `group-top-${overGroupTopId}`,
       });
     } else if (overGroup) {
       // 그룹에 드롭하는 경우 - 시각적 피드백 없음 (가로선만 사용)
@@ -650,16 +666,16 @@ export function Sidebar({
     } else if (overIndividual) {
       // 개별 목록 아이템 위에 드롭하는 경우 - 선 인디케이터 표시
       setDropIndicator({
-        type: 'line',
+        type: "line",
         targetId: overIndividual.id,
-        position: 'above'
+        position: "above",
       });
     } else if (overGroupItem) {
       // 그룹 내 아이템 위에 드롭하는 경우 - 항상 위쪽에 선 인디케이터 표시
       setDropIndicator({
-        type: 'line',
+        type: "line",
         targetId: overGroupItem.id,
-        position: 'above'
+        position: "above",
       });
     } else if (isOverIndividualArea) {
       // 개별 영역에 드롭하는 경우
@@ -671,9 +687,9 @@ export function Sidebar({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     setDropIndicator(null);
-    
+
     if (!over) {
       setActiveId(null);
       return;
@@ -689,59 +705,72 @@ export function Sidebar({
     }
 
     // 활성 아이템이 어떤 그룹에 있는지 확인
-    const activeGroup = groups.find(group => 
-      group.lists.some(list => list.id === activeId)
+    const activeGroup = groups.find((group) =>
+      group.lists.some((list) => list.id === activeId)
     );
-    const activeIndividual = individualLists.find(list => list.id === activeId);
+    const activeIndividual = individualLists.find(
+      (list) => list.id === activeId
+    );
 
     // 드롭 타겟 분석 - 단순화
-    const overGroupId = overId.startsWith('group-') && !overId.startsWith('group-top-')
-      ? overId.replace('group-', '') : null;
-    const overGroup = overGroupId ? groups.find(group => group.id === overGroupId) : null;
-    
+    const overGroupId =
+      overId.startsWith("group-") && !overId.startsWith("group-top-")
+        ? overId.replace("group-", "")
+        : null;
+    const overGroup = overGroupId
+      ? groups.find((group) => group.id === overGroupId)
+      : null;
+
     // 그룹 상단 드롭 영역인지 확인
-    const overGroupTopId = overId.startsWith('group-top-') ? overId.replace('group-top-', '') : null;
-    
+    const overGroupTopId = overId.startsWith("group-top-")
+      ? overId.replace("group-top-", "")
+      : null;
+
     // 드롭 타겟이 개별 아이템인지 확인
-    const overIndividual = individualLists.find(list => list.id === overId);
-    const overGroupItem = groups.flatMap(g => g.lists).find(list => list.id === overId);
-    
-    
+    const overIndividual = individualLists.find((list) => list.id === overId);
+    const overGroupItem = groups
+      .flatMap((g) => g.lists)
+      .find((list) => list.id === overId);
+
     // 개별 영역으로 드롭하는 경우 확인
-    const isOverIndividualArea = overId === 'individual-area';
+    const isOverIndividualArea = overId === "individual-area";
 
     if (overGroupTopId) {
       // 그룹 헤더 바로 위에 드롭하는 경우
       if (activeIndividual) {
         // 개별 아이템을 그룹 위쪽 개별 영역으로 이동 (일단 맨 끝에 추가)
-        setIndividualLists(prev => {
-          const filtered = prev.filter(list => list.id !== activeId);
+        setIndividualLists((prev) => {
+          const filtered = prev.filter((list) => list.id !== activeId);
           return [...filtered, activeIndividual];
         });
       } else if (activeGroup) {
         // 그룹 내 아이템을 그룹 위쪽 개별 영역으로 이동
-        const activeItem = activeGroup.lists.find(list => list.id === activeId);
+        const activeItem = activeGroup.lists.find(
+          (list) => list.id === activeId
+        );
         if (activeItem) {
           // 그룹에서 제거
-          setGroups(prev => prev.map(group => {
-            if (group.id === activeGroup.id) {
-              return {
-                ...group,
-                lists: group.lists.filter(list => list.id !== activeId)
-              };
-            }
-            return group;
-          }));
+          setGroups((prev) =>
+            prev.map((group) => {
+              if (group.id === activeGroup.id) {
+                return {
+                  ...group,
+                  lists: group.lists.filter((list) => list.id !== activeId),
+                };
+              }
+              return group;
+            })
+          );
 
           // 개별 목록에 추가 (그룹 앞 위치)
-          setIndividualLists(prev => {
+          setIndividualLists((prev) => {
             const newItem = {
               id: activeItem.id,
               name: activeItem.name,
               count: activeItem.count,
-              colorDot: "bg-blue-400"
+              colorDot: "bg-blue-400",
             };
-            
+
             // 일단 맨 끝에 추가 (나중에 정확한 위치 계산 로직 추가 가능)
             return [...prev, newItem];
           });
@@ -751,97 +780,122 @@ export function Sidebar({
       // 그룹에 드롭하는 경우
       if (activeGroup && activeGroup.id !== overGroup.id) {
         // 그룹 간 이동
-        const activeItem = activeGroup.lists.find(list => list.id === activeId);
+        const activeItem = activeGroup.lists.find(
+          (list) => list.id === activeId
+        );
         if (activeItem) {
-          setGroups(prev => prev.map(group => {
-            if (group.id === activeGroup.id) {
-              return {
-                ...group,
-                lists: group.lists.filter(list => list.id !== activeId)
-              };
-            }
-            if (group.id === overGroup.id) {
-              return {
-                ...group,
-                lists: [...group.lists, { ...activeItem, groupId: overGroup.id }]
-              };
-            }
-            return group;
-          }));
+          setGroups((prev) =>
+            prev.map((group) => {
+              if (group.id === activeGroup.id) {
+                return {
+                  ...group,
+                  lists: group.lists.filter((list) => list.id !== activeId),
+                };
+              }
+              if (group.id === overGroup.id) {
+                return {
+                  ...group,
+                  lists: [
+                    ...group.lists,
+                    { ...activeItem, groupId: overGroup.id },
+                  ],
+                };
+              }
+              return group;
+            })
+          );
         }
       } else if (activeIndividual) {
         // 개별 아이템을 그룹으로 이동
-        setIndividualLists(prev => prev.filter(list => list.id !== activeId));
-        setGroups(prev => prev.map(group => {
-          if (group.id === overGroup.id) {
-            return {
-              ...group,
-              lists: [...group.lists, { 
-                id: activeIndividual.id, 
-                name: activeIndividual.name, 
-                count: activeIndividual.count, 
-                groupId: overGroup.id 
-              }]
-            };
-          }
-          return group;
-        }));
+        setIndividualLists((prev) =>
+          prev.filter((list) => list.id !== activeId)
+        );
+        setGroups((prev) =>
+          prev.map((group) => {
+            if (group.id === overGroup.id) {
+              return {
+                ...group,
+                lists: [
+                  ...group.lists,
+                  {
+                    id: activeIndividual.id,
+                    name: activeIndividual.name,
+                    count: activeIndividual.count,
+                    groupId: overGroup.id,
+                  },
+                ],
+              };
+            }
+            return group;
+          })
+        );
       }
     } else if (isOverIndividualArea && activeGroup) {
       // 그룹 내 아이템을 개별 영역으로 이동
-      const activeItem = activeGroup.lists.find(list => list.id === activeId);
+      const activeItem = activeGroup.lists.find((list) => list.id === activeId);
       if (activeItem) {
-        setGroups(prev => prev.map(group => {
-          if (group.id === activeGroup.id) {
-            return {
-              ...group,
-              lists: group.lists.filter(list => list.id !== activeId)
-            };
-          }
-          return group;
-        }));
+        setGroups((prev) =>
+          prev.map((group) => {
+            if (group.id === activeGroup.id) {
+              return {
+                ...group,
+                lists: group.lists.filter((list) => list.id !== activeId),
+              };
+            }
+            return group;
+          })
+        );
 
-        setIndividualLists(prev => [...prev, {
-          id: activeItem.id,
-          name: activeItem.name,
-          count: activeItem.count,
-          colorDot: "bg-blue-400"
-        }]);
+        setIndividualLists((prev) => [
+          ...prev,
+          {
+            id: activeItem.id,
+            name: activeItem.name,
+            count: activeItem.count,
+            colorDot: "bg-blue-400",
+          },
+        ]);
       }
     } else if (overIndividual && activeGroup) {
       // 그룹 내 아이템을 개별 아이템 영역으로 이동
-      const activeItem = activeGroup.lists.find(list => list.id === activeId);
+      const activeItem = activeGroup.lists.find((list) => list.id === activeId);
       if (activeItem) {
         // 그룹에서 제거
-        setGroups(prev => prev.map(group => {
-          if (group.id === activeGroup.id) {
-            return {
-              ...group,
-              lists: group.lists.filter(list => list.id !== activeId)
-            };
-          }
-          return group;
-        }));
+        setGroups((prev) =>
+          prev.map((group) => {
+            if (group.id === activeGroup.id) {
+              return {
+                ...group,
+                lists: group.lists.filter((list) => list.id !== activeId),
+              };
+            }
+            return group;
+          })
+        );
 
         // 개별 목록에 추가
-        const overIndex = individualLists.findIndex(list => list.id === overId);
-        setIndividualLists(prev => {
+        const overIndex = individualLists.findIndex(
+          (list) => list.id === overId
+        );
+        setIndividualLists((prev) => {
           const newList = [...prev];
           newList.splice(overIndex, 0, {
             id: activeItem.id,
             name: activeItem.name,
             count: activeItem.count,
-            colorDot: "bg-blue-400"
+            colorDot: "bg-blue-400",
           });
           return newList;
         });
       }
     } else if (activeIndividual && overIndividual) {
       // 개별 아이템들 간의 순서 변경
-      const activeIndex = individualLists.findIndex(list => list.id === activeId);
-      const overIndex = individualLists.findIndex(list => list.id === overId);
-      
-      setIndividualLists(prev => {
+      const activeIndex = individualLists.findIndex(
+        (list) => list.id === activeId
+      );
+      const overIndex = individualLists.findIndex((list) => list.id === overId);
+
+      setIndividualLists((prev) => {
         const newList = [...prev];
         const [removed] = newList.splice(activeIndex, 1);
         newList.splice(overIndex, 0, removed);
@@ -849,61 +903,84 @@ export function Sidebar({
       });
     } else if (activeIndividual && overGroupItem) {
       // 개별 아이템을 그룹 내 특정 위치로 이동
-      const targetGroup = groups.find(g => g.lists.some(l => l.id === overId));
+      const targetGroup = groups.find((g) =>
+        g.lists.some((l) => l.id === overId)
+      );
       if (targetGroup) {
-        const overIndex = targetGroup.lists.findIndex(list => list.id === overId);
-        
-        setIndividualLists(prev => prev.filter(list => list.id !== activeId));
-        setGroups(prev => prev.map(group => {
-          if (group.id === targetGroup.id) {
-            const newLists = [...group.lists];
-            newLists.splice(overIndex, 0, {
-              id: activeIndividual.id,
-              name: activeIndividual.name,
-              count: activeIndividual.count,
-              groupId: targetGroup.id
-            });
-            return { ...group, lists: newLists };
-          }
-          return group;
-        }));
+        const overIndex = targetGroup.lists.findIndex(
+          (list) => list.id === overId
+        );
+
+        setIndividualLists((prev) =>
+          prev.filter((list) => list.id !== activeId)
+        );
+        setGroups((prev) =>
+          prev.map((group) => {
+            if (group.id === targetGroup.id) {
+              const newLists = [...group.lists];
+              newLists.splice(overIndex, 0, {
+                id: activeIndividual.id,
+                name: activeIndividual.name,
+                count: activeIndividual.count,
+                groupId: targetGroup.id,
+              });
+              return { ...group, lists: newLists };
+            }
+            return group;
+          })
+        );
       }
     } else if (activeGroup && overGroupItem) {
       // 그룹 내에서의 순서 변경 또는 그룹 간 이동
-      const targetGroup = groups.find(g => g.lists.some(l => l.id === overId));
+      const targetGroup = groups.find((g) =>
+        g.lists.some((l) => l.id === overId)
+      );
       if (targetGroup) {
-        const activeItem = activeGroup.lists.find(list => list.id === activeId);
-        const overIndex = targetGroup.lists.findIndex(list => list.id === overId);
-        
+        const activeItem = activeGroup.lists.find(
+          (list) => list.id === activeId
+        );
+        const overIndex = targetGroup.lists.findIndex(
+          (list) => list.id === overId
+        );
+
         if (activeItem) {
           if (activeGroup.id === targetGroup.id) {
             // 같은 그룹 내 순서 변경
-            const activeIndex = activeGroup.lists.findIndex(list => list.id === activeId);
-            setGroups(prev => prev.map(group => {
-              if (group.id === activeGroup.id) {
-                const newLists = [...group.lists];
-                const [removed] = newLists.splice(activeIndex, 1);
-                newLists.splice(overIndex, 0, removed);
-                return { ...group, lists: newLists };
-              }
-              return group;
-            }));
+            const activeIndex = activeGroup.lists.findIndex(
+              (list) => list.id === activeId
+            );
+            setGroups((prev) =>
+              prev.map((group) => {
+                if (group.id === activeGroup.id) {
+                  const newLists = [...group.lists];
+                  const [removed] = newLists.splice(activeIndex, 1);
+                  newLists.splice(overIndex, 0, removed);
+                  return { ...group, lists: newLists };
+                }
+                return group;
+              })
+            );
           } else {
             // 다른 그룹으로 이동
-            setGroups(prev => prev.map(group => {
-              if (group.id === activeGroup.id) {
-                return {
-                  ...group,
-                  lists: group.lists.filter(list => list.id !== activeId)
-                };
-              }
-              if (group.id === targetGroup.id) {
-                const newLists = [...group.lists];
-                newLists.splice(overIndex, 0, { ...activeItem, groupId: targetGroup.id });
-                return { ...group, lists: newLists };
-              }
-              return group;
-            }));
+            setGroups((prev) =>
+              prev.map((group) => {
+                if (group.id === activeGroup.id) {
+                  return {
+                    ...group,
+                    lists: group.lists.filter((list) => list.id !== activeId),
+                  };
+                }
+                if (group.id === targetGroup.id) {
+                  const newLists = [...group.lists];
+                  newLists.splice(overIndex, 0, {
+                    ...activeItem,
+                    groupId: targetGroup.id,
+                  });
+                  return { ...group, lists: newLists };
+                }
+                return group;
+              })
+            );
           }
         }
       }
@@ -911,7 +988,6 @@ export function Sidebar({
 
     setActiveId(null);
   };
-
 
   return (
     <TooltipProvider>
@@ -960,7 +1036,7 @@ export function Sidebar({
             {/* User Lists and Groups */}
             <div className="space-y-1">
               {/* Individual Lists - 드래그 가능 */}
-              <DroppableIndividualArea 
+              <DroppableIndividualArea
                 individualLists={individualLists}
                 isSelected={isSelected}
                 onFilterChange={onFilterChange}
@@ -1046,13 +1122,12 @@ export function Sidebar({
         </div>
 
         <DragOverlay>
+          {/* 마우스 감지를 위해 투명한 요소 유지 */}
           {activeId ? (
-            <div className="bg-white rounded shadow-lg border p-2 opacity-90">
-              <span className="text-sm">
-                {individualLists.find(list => list.id === activeId)?.name ||
-                 groups.flatMap(g => g.lists).find(list => list.id === activeId)?.name}
-              </span>
-            </div>
+            <div
+              className="w-4 h-4 opacity-0 pointer-events-none"
+              style={{ background: "transparent" }}
+            />
           ) : null}
         </DragOverlay>
       </DndContext>
