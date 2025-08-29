@@ -231,6 +231,25 @@ function GroupTopDropZone({
   );
 }
 
+// 그룹 헤더 드롭 영역 (그룹 헤더 자체에 드롭 가능)
+function GroupHeaderDropZone({
+  groupId,
+  children,
+}: {
+  groupId: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef } = useDroppable({
+    id: `group-header-${groupId}`,
+  });
+
+  return (
+    <div ref={setNodeRef} className="w-full">
+      {children}
+    </div>
+  );
+}
+
 function DroppableGroup({
   group,
   isExpanded,
@@ -239,6 +258,9 @@ function DroppableGroup({
   isSelected,
   onDelete,
   dropIndicator,
+  dragAttributes,
+  dragListeners,
+  dragRef,
 }: SidebarGroupProps & {
   dropIndicator: {
     type: "line" | "group";
@@ -246,6 +268,9 @@ function DroppableGroup({
     targetId?: string;
     groupId?: string;
   } | null;
+  dragAttributes?: any;
+  dragListeners?: any;
+  dragRef?: any;
 }) {
   const { setNodeRef } = useDroppable({
     id: `group-${group.id}`,
@@ -268,10 +293,21 @@ function DroppableGroup({
         <Collapsible open={isExpanded} onOpenChange={onToggle}>
           <ContextMenu>
             <ContextMenuTrigger>
-              <CollapsibleTrigger asChild>
-                <div className="w-full rounded cursor-pointer hover:bg-gray-100 transition-colors relative p-2 select-none">
+              <GroupHeaderDropZone groupId={group.id}>
+                <div 
+                  ref={dragRef}
+                  {...dragAttributes}
+                  {...dragListeners}
+                  className="w-full rounded hover:bg-gray-100 transition-colors relative p-2 select-none"
+                >
                   <div className="flex items-center justify-between px-2 py-1">
-                    <div className="flex items-center gap-2 flex-1">
+                    <div 
+                      className="flex items-center gap-2 flex-1 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle();
+                      }}
+                    >
                       {isExpanded ? (
                         <FolderOpen className="h-4 w-4 text-blue-500" />
                       ) : (
@@ -279,14 +315,22 @@ function DroppableGroup({
                       )}
                       <span className="text-sm font-medium">{group.name}</span>
                     </div>
-                    {isExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
+                    <div 
+                      className="cursor-pointer p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle();
+                      }}
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </CollapsibleTrigger>
+              </GroupHeaderDropZone>
             </ContextMenuTrigger>
             <ContextMenuContent>
               <ContextMenuItem
@@ -352,6 +396,53 @@ function DroppableGroup({
   );
 }
 
+// 드래그 가능한 그룹 컴포넌트
+function DraggableSidebarGroup({
+  group,
+  isExpanded,
+  onToggle,
+  onFilterChange,
+  isSelected,
+  onDelete,
+  dropIndicator,
+}: SidebarGroupProps & {
+  dropIndicator: {
+    type: "line" | "group";
+    position?: "above" | "below";
+    targetId?: string;
+    groupId?: string;
+  } | null;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    isDragging,
+  } = useSortable({
+    id: group.id,
+  });
+
+  const style = {};
+
+  return (
+    <div className={cn(isDragging && "opacity-50")}>
+      <DroppableGroup
+        group={group}
+        isExpanded={isExpanded}
+        onToggle={onToggle}
+        onFilterChange={onFilterChange}
+        isSelected={isSelected}
+        onDelete={onDelete}
+        dropIndicator={dropIndicator}
+        // 드래그 속성을 DroppableGroup에 전달
+        dragAttributes={attributes}
+        dragListeners={listeners}
+        dragRef={setNodeRef}
+      />
+    </div>
+  );
+}
+
 // 기존 함수명 유지를 위한 래퍼
 function SidebarGroup(
   props: SidebarGroupProps & {
@@ -363,7 +454,7 @@ function SidebarGroup(
     } | null;
   }
 ) {
-  return <DroppableGroup {...props} />;
+  return <DraggableSidebarGroup {...props} />;
 }
 
 // 드롭 인디케이터 컴포넌트
@@ -537,6 +628,15 @@ export function Sidebar({
     { id: "daily", name: "나중에 할 일", count: 1, colorDot: "bg-red-400" },
   ]);
 
+  // 그룹과 개별 목록을 하나의 정렬 가능한 배열로 통합
+  const [sortableItems, setSortableItems] = useState([
+    { id: "ideas", type: "list" as const },
+    { id: "shopping", type: "list" as const },
+    { id: "daily", type: "list" as const },
+    { id: "work", type: "group" as const },
+    { id: "personal", type: "group" as const },
+  ]);
+
   const systemItems = [
     { id: "today", name: "오늘 할 일", icon: Sun, count: 5 },
     { id: "important", name: "중요", icon: Star, count: 3 },
@@ -625,61 +725,79 @@ export function Sidebar({
     const activeId = active.id as string;
     const overId = over.id as string;
 
+    console.log('DragOver:', { activeId, overId }); // 디버깅용
+
     // 같은 아이템이면 무시
     if (activeId === overId) {
       setDropIndicator(null);
       return;
     }
 
-    // 드롭 타겟 분석
+    // 메인 영역에서 그룹/목록 간 순서 변경 감지
+    const activeItem = sortableItems.find(item => item.id === activeId);
+    const overItem = sortableItems.find(item => item.id === overId);
+
+    if (activeItem && overItem) {
+      console.log('Main area drop:', { activeItem, overItem }); // 디버깅용
+      // 메인 영역에서의 순서 변경
+      setDropIndicator({
+        type: "line",
+        targetId: overId,
+        position: "above",
+      });
+      return;
+    }
+
+    // 기존 로직 유지 (그룹 내부 드롭 등)
     const overGroupId =
-      overId.startsWith("group-") && !overId.startsWith("group-top-")
+      overId.startsWith("group-") && !overId.startsWith("group-top-") && !overId.startsWith("group-header-")
         ? overId.replace("group-", "")
         : null;
     const overGroup = overGroupId
       ? groups.find((group) => group.id === overGroupId)
       : null;
 
-    // 그룹 상단 드롭 영역인지 확인
     const overGroupTopId = overId.startsWith("group-top-")
       ? overId.replace("group-top-", "")
       : null;
 
-    // 개별 영역으로 드롭하는 경우 확인
-    const isOverIndividualArea = overId === "individual-area";
+    // 그룹 헤더 드롭 감지
+    const overGroupHeaderId = overId.startsWith("group-header-")
+      ? overId.replace("group-header-", "")
+      : null;
 
-    // 드롭 타겟이 개별 아이템인지 확인
     const overIndividual = individualLists.find((list) => list.id === overId);
     const overGroupItem = groups
       .flatMap((g) => g.lists)
       .find((list) => list.id === overId);
 
     if (overGroupTopId) {
-      // 그룹 상단에 드롭하는 경우 - 선 인디케이터 표시
       setDropIndicator({
         type: "line",
         targetId: `group-top-${overGroupTopId}`,
       });
+    } else if (overGroupHeaderId) {
+      console.log('Group header drop:', overGroupHeaderId); // 디버깅용
+      // 그룹 헤더에 드롭하는 경우 - 그룹 위치에서 순서 변경
+      setDropIndicator({
+        type: "line",
+        targetId: overGroupHeaderId,
+        position: "above",
+      });
     } else if (overGroup) {
-      // 그룹에 드롭하는 경우 - 시각적 피드백 없음 (가로선만 사용)
       setDropIndicator(null);
     } else if (overIndividual) {
-      // 개별 목록 아이템 위에 드롭하는 경우 - 선 인디케이터 표시
       setDropIndicator({
         type: "line",
         targetId: overIndividual.id,
         position: "above",
       });
     } else if (overGroupItem) {
-      // 그룹 내 아이템 위에 드롭하는 경우 - 항상 위쪽에 선 인디케이터 표시
       setDropIndicator({
         type: "line",
         targetId: overGroupItem.id,
         position: "above",
       });
-    } else if (isOverIndividualArea) {
-      // 개별 영역에 드롭하는 경우
-      setDropIndicator(null);
     } else {
       setDropIndicator(null);
     }
@@ -700,6 +818,34 @@ export function Sidebar({
 
     // 같은 위치로 드롭하면 무시
     if (activeId === overId) {
+      setActiveId(null);
+      return;
+    }
+
+    // 메인 영역에서 그룹/목록 간 순서 변경 처리
+    const activeItem = sortableItems.find(item => item.id === activeId);
+    let overItem = sortableItems.find(item => item.id === overId);
+
+    // 그룹 헤더 드롭인 경우 처리
+    if (!overItem && overId.startsWith("group-header-")) {
+      const groupId = overId.replace("group-header-", "");
+      overItem = sortableItems.find(item => item.id === groupId);
+      console.log('Group header drag end:', { groupId, overItem }); // 디버깅용
+    }
+
+    if (activeItem && overItem) {
+      console.log('Executing main area reorder:', { activeItem, overItem }); // 디버깅용
+      const activeIndex = sortableItems.findIndex(item => item.id === activeId);
+      const overIndex = sortableItems.findIndex(item => item.id === overItem.id);
+
+      setSortableItems(prev => {
+        const newItems = [...prev];
+        const [removed] = newItems.splice(activeIndex, 1);
+        newItems.splice(overIndex, 0, removed);
+        console.log('New order:', newItems); // 디버깅용
+        return newItems;
+      });
+
       setActiveId(null);
       return;
     }
@@ -1033,29 +1179,60 @@ export function Sidebar({
               <div className="border-t border-gray-300"></div>
             </div>
 
-            {/* User Lists and Groups */}
+            {/* User Lists and Groups - 통합된 정렬 가능한 영역 */}
             <div className="space-y-1">
-              {/* Individual Lists - 드래그 가능 */}
-              <DroppableIndividualArea
-                individualLists={individualLists}
-                isSelected={isSelected}
-                onFilterChange={onFilterChange}
-                dropIndicator={dropIndicator}
-              />
+              <SortableContext items={sortableItems.map(item => item.id)}>
+                {sortableItems.map((item) => {
+                  // 드롭 인디케이터 확인
+                  const showIndicatorAbove = dropIndicator?.type === 'line' && 
+                                           dropIndicator?.targetId === item.id && 
+                                           dropIndicator?.position === 'above';
+                  const showIndicatorBelow = dropIndicator?.type === 'line' && 
+                                           dropIndicator?.targetId === item.id && 
+                                           dropIndicator?.position === 'below';
 
-              {/* Groups */}
-              {groups.map((group) => (
-                <SidebarGroup
-                  key={group.id}
-                  group={group}
-                  isExpanded={expandedGroups.has(group.id)}
-                  onToggle={() => toggleGroup(group.id)}
-                  onFilterChange={onFilterChange}
-                  isSelected={isSelected}
-                  onDelete={() => handleDeleteGroup(group.id)}
-                  dropIndicator={dropIndicator}
-                />
-              ))}
+                  if (item.type === "list") {
+                    const listData = individualLists.find(list => list.id === item.id);
+                    if (!listData) return null;
+                    
+                    return (
+                      <div key={item.id} className="relative">
+                        {showIndicatorAbove && <DropIndicator type="line" position="above" />}
+                        <DraggableSidebarItem
+                          id={listData.id}
+                          name={listData.name}
+                          count={listData.count}
+                          colorDot={listData.colorDot}
+                          isSelected={isSelected(listData.id)}
+                          onClick={() => onFilterChange(listData.id)}
+                          isDraggable={true}
+                        />
+                        {showIndicatorBelow && <DropIndicator type="line" position="below" />}
+                      </div>
+                    );
+                  } else if (item.type === "group") {
+                    const groupData = groups.find(group => group.id === item.id);
+                    if (!groupData) return null;
+                    
+                    return (
+                      <div key={item.id} className="relative">
+                        {showIndicatorAbove && <DropIndicator type="line" position="above" />}
+                        <SidebarGroup
+                          group={groupData}
+                          isExpanded={expandedGroups.has(groupData.id)}
+                          onToggle={() => toggleGroup(groupData.id)}
+                          onFilterChange={onFilterChange}
+                          isSelected={isSelected}
+                          onDelete={() => handleDeleteGroup(groupData.id)}
+                          dropIndicator={dropIndicator}
+                        />
+                        {showIndicatorBelow && <DropIndicator type="line" position="below" />}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </SortableContext>
 
               {/* Add Actions */}
               <div className="space-y-2 pt-2 pb-4">
