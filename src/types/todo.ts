@@ -10,6 +10,11 @@ export interface TodoItem {
   endDate?: Date
   createdAt: Date
   updatedAt: Date
+  repeat?: {
+    type: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    interval?: number // 매 n일/주/월/년
+    endDate?: Date
+  }
 }
 
 export type TodoPriority = TodoItem['priority']

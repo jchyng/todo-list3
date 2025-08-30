@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { FileText, Calendar, RotateCw, Sun, CheckCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { TodoItem as TodoItemType } from "@/types/todo";
@@ -60,13 +60,88 @@ export function TodoItem({
           {todo.title}
         </div>
 
-        {/* Note indicator */}
-        {todo.description && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <FileText className="h-3 w-3" />
-            <span>노트</span>
-          </div>
-        )}
+        {/* Indicators */}
+        {(todo.description ||
+          todo.repeat ||
+          todo.dueDate ||
+          (todo.status && todo.status !== "pending" && !todo.completed)) &&
+          (() => {
+            // Count all indicators for text display logic
+            const indicatorCount = [
+              todo.description,
+              todo.dueDate,
+              todo.repeat,
+              todo.status && todo.status !== "pending" && !todo.completed,
+            ].filter(Boolean).length;
+
+            const showTextForIndicators = indicatorCount < 2;
+            const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
+
+            return (
+              <div className={cn("flex items-center gap-3 text-xs", isOverdue ? "text-red-700" : "text-gray-500")}>
+                {/* Note indicator */}
+                {todo.description && (
+                  <div className="flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    {showTextForIndicators && <span>노트</span>}
+                  </div>
+                )}
+
+                {/* Repeat indicator */}
+                {todo.repeat && (
+                  <div className="flex items-center gap-1">
+                    <RotateCw className="h-3 w-3" />
+                    {showTextForIndicators && (
+                      <span>
+                        {todo.repeat.interval && todo.repeat.interval > 1 ? (
+                          "반복"
+                        ) : (
+                          <>
+                            {todo.repeat.type === "daily" && "매일"}
+                            {todo.repeat.type === "weekly" && "매주"}
+                            {todo.repeat.type === "monthly" && "매월"}
+                            {todo.repeat.type === "yearly" && "매년"}
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Due date indicator */}
+                {todo.dueDate && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    <span>
+                      {new Date(todo.dueDate).toISOString().split("T")[0]}
+                    </span>
+                  </div>
+                )}
+
+                {/* Progress status indicator */}
+                {todo.status &&
+                  todo.status !== "pending" &&
+                  !todo.completed && (
+                    <div className="flex items-center gap-1">
+                      {todo.status === "in_progress" && (
+                        <>
+                          <Sun className="h-3 w-3 text-yellow-500" />
+                          {showTextForIndicators && (
+                            <span className="text-yellow-600">진행 중</span>
+                          )}
+                        </>
+                      )}
+                      {todo.status === "completed" && (
+                        <>
+                          <CheckCircle className="h-3 w-3" />
+                          {showTextForIndicators && <span>완료됨</span>}
+                        </>
+                      )}
+                    </div>
+                  )}
+              </div>
+            );
+          })()}
       </div>
 
       {/* Priority Star */}

@@ -33,7 +33,8 @@ export function TodoPage() {
       description: "강의 내용을 정리하고 슬라이드를 준비해야 합니다.",
       completed: false,
       priority: "high",
-      status: "pending",
+      status: "in_progress",
+      dueDate: new Date(Date.now() + 86400000 * 3), // 3일 후
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -44,6 +45,11 @@ export function TodoPage() {
       completed: false,
       priority: "low",
       status: "pending",
+      dueDate: new Date(Date.now() + 86400000 * 7), // 1주일 후
+      repeat: {
+        type: "weekly",
+        interval: 1,
+      },
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -54,26 +60,36 @@ export function TodoPage() {
       completed: true,
       priority: "high",
       status: "completed",
-      createdAt: new Date(Date.now() - 86400000), // 1일 전
+      dueDate: new Date(Date.now() - 86400000), // 1일 전 (완료됨)
+      createdAt: new Date(Date.now() - 86400000 * 2), // 2일 전
       updatedAt: new Date(),
     },
     {
       id: "4",
       title: "Notion에 오늘 할 작업계획하기",
       description: undefined,
-      completed: true,
-      priority: "low",
-      status: "completed",
+      completed: false,
+      priority: "medium",
+      status: "in_progress",
+      dueDate: new Date(), // 오늘
+      repeat: {
+        type: "daily",
+        interval: 1,
+      },
       createdAt: new Date(Date.now() - 172800000), // 2일 전
       updatedAt: new Date(),
     },
     {
       id: "5",
       title: "스트레칭",
-      description: undefined,
-      completed: true,
+      description: "매일 30분씩 스트레칭하기",
+      completed: false,
       priority: "low",
-      status: "completed",
+      status: "pending",
+      repeat: {
+        type: "daily",
+        interval: 1,
+      },
       createdAt: new Date(Date.now() - 259200000), // 3일 전
       updatedAt: new Date(),
     },
@@ -84,7 +100,8 @@ export function TodoPage() {
       completed: true,
       priority: "medium",
       status: "completed",
-      createdAt: new Date(Date.now() - 345600000), // 4일 전
+      dueDate: new Date(Date.now() - 345600000), // 4일 전 (완료됨)
+      createdAt: new Date(Date.now() - 345600000 * 2), // 8일 전
       updatedAt: new Date(),
     },
     {
@@ -94,7 +111,75 @@ export function TodoPage() {
       completed: true,
       priority: "high",
       status: "completed",
-      createdAt: new Date(Date.now() - 432000000), // 5일 전
+      dueDate: new Date(Date.now() - 432000000), // 5일 전 (완료됨)
+      createdAt: new Date(Date.now() - 432000000 * 2), // 10일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "8",
+      title: "월간 보고서 작성",
+      description: "지난 달 성과 정리 및 다음 달 계획 수립",
+      completed: false,
+      priority: "high",
+      status: "pending",
+      dueDate: new Date(Date.now() + 86400000 * 14), // 2주일 후
+      repeat: {
+        type: "monthly",
+        interval: 1,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "9",
+      title: "백업 점검",
+      description: "시스템 백업 상태 확인 및 테스트",
+      completed: false,
+      priority: "medium",
+      status: "in_progress",
+      dueDate: new Date(Date.now() + 86400000 * 2), // 2일 후
+      repeat: {
+        type: "weekly",
+        interval: 2, // 2주마다
+      },
+      createdAt: new Date(Date.now() - 86400000), // 1일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "10",
+      title: "연간 건강검진",
+      description: "종합병원 예약 및 검진 받기",
+      completed: false,
+      priority: "medium",
+      status: "pending",
+      dueDate: new Date(Date.now() + 86400000 * 30), // 1달 후
+      repeat: {
+        type: "yearly",
+        interval: 1,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "11",
+      title: "세금 신고",
+      description: "종합소득세 신고 및 서류 제출",
+      completed: false,
+      priority: "high",
+      status: "pending",
+      dueDate: new Date(Date.now() - 86400000 * 3), // 3일 전 (마감일 지남)
+      createdAt: new Date(Date.now() - 86400000 * 30), // 30일 전
+      updatedAt: new Date(),
+    },
+    {
+      id: "12",
+      title: "도서관 책 반납",
+      description: "대출한 책 반납하기",
+      completed: false,
+      priority: "medium",
+      status: "pending",
+      dueDate: new Date(Date.now() - 86400000 * 1), // 1일 전 (마감일 지남)
+      createdAt: new Date(Date.now() - 86400000 * 14), // 14일 전
       updatedAt: new Date(),
     },
   ]);
