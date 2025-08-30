@@ -4,6 +4,7 @@ export interface SidebarList {
   icon?: string
   count: number
   groupId?: string
+  colorDot?: string
 }
 
 export interface SidebarGroup {
