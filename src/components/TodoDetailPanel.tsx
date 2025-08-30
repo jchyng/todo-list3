@@ -18,7 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   PriorityStarButton,
   DatePickerField,
@@ -77,6 +77,20 @@ export function TodoDetailPanel({
   const [customRepeatInterval, setCustomRepeatInterval] = useState<number>(1);
   const [customRepeatUnit, setCustomRepeatUnit] = useState<RepeatUnitType>("주");
   const [selectedWeekdays, setSelectedWeekdays] = useState<WeekdayType[]>([]);
+
+  // Update local state when todo prop changes
+  useEffect(() => {
+    setTitle(todo.title);
+    setDescription(todo.description || "");
+    setEndDate(todo.endDate);
+    setStatus(todo.status || 'pending');
+    setStartedAt(todo.startedAt);
+    // Reset repeat settings when todo changes
+    setRepeatOption("");
+    setCustomRepeatInterval(1);
+    setCustomRepeatUnit("주");
+    setSelectedWeekdays([]);
+  }, [todo.id, todo.title, todo.description, todo.endDate, todo.status, todo.startedAt]); // Update when any todo property changes
 
   const handleSave = useCallback(() => {
     onUpdate({
