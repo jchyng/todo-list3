@@ -20,11 +20,3 @@
 
 - calendar
   https://calendar.jeraidi.tech/calendar
-
-# 메인
-
-2. 정렬
-
-# TODO
-
-3. 시작 버튼은 옵션으로 안눌러도 됨 = todo에도 표시 안하고 달력에만 보여줌

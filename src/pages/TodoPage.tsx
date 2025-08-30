@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { TodoItem } from "@/components/TodoItem";
 import { TodoDetailPanel } from "@/components/TodoDetailPanel";
 import { AddTodoInput } from "@/components/AddTodoInput";
+import { SortDropdown, type SortField, type SortDirection } from "@/components/SortDropdown";
 import { ColorPalette, type ColorValue } from "@/components/common";
 import type { TodoItem as TodoItemType } from "@/types/todo";
 import type { SidebarFilter } from "@/types/sidebar";
@@ -17,6 +18,8 @@ export function TodoPage() {
   const [editingTitle, setEditingTitle] = useState("");
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // 목록별 색상 관리
   const [listColors, setListColors] = useState<Record<string, ColorValue>>({
@@ -300,6 +303,51 @@ export function TodoPage() {
     setIsSidebarVisible(!isSidebarVisible);
   };
 
+  // 정렬 함수
+  const sortTodos = (todos: TodoItemType[], field: SortField | null, direction: SortDirection): TodoItemType[] => {
+    const sortedTodos = [...todos];
+    
+    if (!field) {
+      // 기본 정렬 (업데이트된 시간 기준 내림차순)
+      return sortedTodos.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+    
+    const multiplier = direction === 'asc' ? 1 : -1;
+    
+    switch (field) {
+      case 'priority':
+        return sortedTodos.sort((a, b) => {
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          return (priorityOrder[a.priority] - priorityOrder[b.priority]) * multiplier;
+        });
+      case 'dueDate':
+        return sortedTodos.sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) * multiplier;
+        });
+      case 'created':
+        return sortedTodos.sort((a, b) => 
+          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * multiplier
+        );
+      case 'title':
+        return sortedTodos.sort((a, b) => a.title.localeCompare(b.title) * multiplier);
+      case 'status':
+        return sortedTodos.sort((a, b) => {
+          const statusOrder = { pending: 1, in_progress: 2, completed: 3 };
+          return (statusOrder[a.status] - statusOrder[b.status]) * multiplier;
+        });
+      default:
+        return sortedTodos;
+    }
+  };
+
+  const handleSortChange = (field: SortField | null, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
+  };
+
   const filteredTodos = todos.filter((todo) => {
     // 검색 필터
     const matchesSearch =
@@ -328,9 +376,9 @@ export function TodoPage() {
     return matchesSearch && matchesFilter;
   });
 
-  // 완료된 할 일과 미완료 할 일 분리
-  const incompleteTodos = filteredTodos.filter(todo => !todo.completed);
-  const completedTodos = filteredTodos.filter(todo => todo.completed);
+  // 완료된 할 일과 미완료 할 일 분리 및 정렬
+  const incompleteTodos = sortTodos(filteredTodos.filter(todo => !todo.completed), sortField, sortDirection);
+  const completedTodos = sortTodos(filteredTodos.filter(todo => todo.completed), sortField, sortDirection);
 
   return (
     <div className="h-screen bg-background flex flex-col">
@@ -362,43 +410,50 @@ export function TodoPage() {
             }`}
           >
             <div className="flex flex-col space-y-4 h-full">
-              <div className="flex items-center gap-2">
-                {!isSidebarVisible && (
-                  <button onClick={toggleSidebar} className="p-2">
-                    <Menu className="h-4 w-4" />
-                  </button>
-                )}
-                <ColorPalette
-                  currentColor={getCurrentListColor(selectedFilter)}
-                  onColorChange={handleColorChange}
-                >
-                  <button className="flex-shrink-0">
-                    <div
-                      className={`w-5 h-5 rounded-full transition-all hover:scale-110 ${getCurrentListColor(
-                        selectedFilter
-                      )}`}
-                      title="목록 색상 변경"
-                    />
-                  </button>
-                </ColorPalette>
-                {isEditingTitle ? (
-                  <input
-                    type="text"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onKeyDown={handleTitleKeyDown}
-                    onBlur={handleTitleBlur}
-                    className="border-0 outline-0 text-xl font-bold text-gray-900 bg-transparent focus:outline-none focus:ring-0 focus:border-0"
-                    autoFocus
-                  />
-                ) : (
-                  <h2
-                    className="text-xl font-bold cursor-text"
-                    onClick={handleTitleClick}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {!isSidebarVisible && (
+                    <button onClick={toggleSidebar} className="p-2">
+                      <Menu className="h-4 w-4" />
+                    </button>
+                  )}
+                  <ColorPalette
+                    currentColor={getCurrentListColor(selectedFilter)}
+                    onColorChange={handleColorChange}
                   >
-                    {getFilterTitle(selectedFilter)}
-                  </h2>
-                )}
+                    <button className="flex-shrink-0">
+                      <div
+                        className={`w-5 h-5 rounded-full transition-all hover:scale-110 ${getCurrentListColor(
+                          selectedFilter
+                        )}`}
+                        title="목록 색상 변경"
+                      />
+                    </button>
+                  </ColorPalette>
+                  {isEditingTitle ? (
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={handleTitleKeyDown}
+                      onBlur={handleTitleBlur}
+                      className="border-0 outline-0 text-xl font-bold text-gray-900 bg-transparent focus:outline-none focus:ring-0 focus:border-0"
+                      autoFocus
+                    />
+                  ) : (
+                    <h2
+                      className="text-xl font-bold cursor-text"
+                      onClick={handleTitleClick}
+                    >
+                      {getFilterTitle(selectedFilter)}
+                    </h2>
+                  )}
+                </div>
+                <SortDropdown 
+                  sortField={sortField} 
+                  sortDirection={sortDirection} 
+                  onSortChange={handleSortChange} 
+                />
               </div>
               {searchQuery && (
                 <p className="text-sm text-muted-foreground">
